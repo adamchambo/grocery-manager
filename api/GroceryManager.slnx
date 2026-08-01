@@ -27,4 +27,8 @@
   <Folder Name="/src/Modules/Stocktakes/">
     <Project Path="src/Modules/Stocktakes/GroceryManager.Modules.Stocktakes.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GroceryManager.Api.IntegrationTests/GroceryManager.Api.IntegrationTests.csproj" />
+    <Project Path="tests/GroceryManager.UnitTests/GroceryManager.UnitTests.csproj" />
+  </Folder>
 </Solution>

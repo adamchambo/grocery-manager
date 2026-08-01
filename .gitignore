@@ -1,3 +1,13 @@
 /planning
 /.agents/
 /AGENTS.md
+/.pnpm-store/
+
+# Workspace-local environment and tooling
+.DS_Store
+/.idea/
+/.vscode/
+/.env
+/.env.*
+!/.env.example
+/pnpm-debug.log*
