@@ -5,6 +5,6 @@ public enum StocktakeEntryStatus
     Pending,
     Confirmed,
     Corrected,
-    Empty,
+    Zero,
     Skipped
 }

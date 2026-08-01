@@ -14,8 +14,8 @@ public sealed class PantryItem
     public TrackingUnit TrackingUnit { get; set; }
     public decimal? PackageSize { get; set; }
     public string? PackageUnit { get; set; }
-    public decimal ConsumptionQuantity { get; set; }
-    public decimal ConsumptionPeriodDays { get; set; }
+    public decimal? ConsumptionQuantity { get; set; }
+    public decimal? ConsumptionPeriodDays { get; set; }
     public decimal BufferDays { get; set; }
     public bool IsArchived { get; set; }
     public DateTimeOffset CreatedAtUtc { get; set; }
