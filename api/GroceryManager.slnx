@@ -1,0 +1,30 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GroceryManager.Api/GroceryManager.Api.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Documents/">
+    <Project Path="src/Modules/Documents/GroceryManager.Modules.Documents.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Entitlements/">
+    <Project Path="src/Modules/Entitlements/GroceryManager.Modules.Entitlements.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/GroceryManager.Modules.Identity.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/InventoryHistory/">
+    <Project Path="src/Modules/InventoryHistory/GroceryManager.Modules.InventoryHistory.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Pantry/">
+    <Project Path="src/Modules/Pantry/GroceryManager.Modules.Pantry.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Shopping/">
+    <Project Path="src/Modules/Shopping/GroceryManager.Modules.Shopping.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/ShoppingPresets/">
+    <Project Path="src/Modules/ShoppingPresets/GroceryManager.Modules.ShoppingPresets.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Stocktakes/">
+    <Project Path="src/Modules/Stocktakes/GroceryManager.Modules.Stocktakes.csproj" />
+  </Folder>
+</Solution>
