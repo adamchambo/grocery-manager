@@ -57,7 +57,7 @@ public sealed class GroceryManagerDbContext(
     private void RotateConcurrencyTokens()
     {
         foreach (var entry in ChangeTracker.Entries()
-                     .Where(entry => entry.State is EntityState.Added or EntityState.Modified))
+                    .Where(entry => entry.State is EntityState.Added or EntityState.Modified))
         {
             var versionProperty = entry.Metadata.FindProperty("Version");
             if (versionProperty?.ClrType == typeof(byte[]))
