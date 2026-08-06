@@ -1,11 +1,13 @@
 using Scalar.AspNetCore;
 
-namespace GroceryManager.Api.Configuration;
+namespace GroceryManager.Api.Extensions;
 
 public static class WebApplicationExtensions
 {
     public static WebApplication UseWebApplicationMiddleware(this WebApplication app)
     {
+        app.UseExceptionHandler();
+
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();
@@ -13,7 +15,6 @@ public static class WebApplicationExtensions
         }
         else
         {
-            app.UseExceptionHandler("/error");
             app.UseHsts();
         }
 
@@ -22,6 +23,7 @@ public static class WebApplicationExtensions
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
+        app.MapHealthChecks("/health");
 
         return app;
     }
