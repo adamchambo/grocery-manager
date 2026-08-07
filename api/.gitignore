@@ -6,8 +6,9 @@
 # dotenv files
 .env
 
-# Local ASP.NET Core settings may contain development credentials.
-/src/GroceryManager.Api/appsettings.Development.json
+# Runtime ASP.NET Core settings may contain environment credentials.
+/src/GroceryManager.Api/appsettings*.json
+!/src/GroceryManager.Api/appsettings.example.json
 
 # User-specific files
 *.rsuser
