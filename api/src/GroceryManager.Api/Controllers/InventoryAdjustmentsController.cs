@@ -1,20 +1,43 @@
+using GroceryManager.Api.Common.Dtos;
+using GroceryManager.Api.Dtos.InventoryHistory;
+using GroceryManager.Api.Services.InventoryHistory;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GroceryManager.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/inventory-adjustments")]
-public sealed class InventoryAdjustmentsController : ControllerBase
+public sealed class InventoryAdjustmentsController(IInventoryAdjustmentService inventoryAdjustmentService)
+    : ControllerBase
 {
     [HttpGet]
-    public IActionResult List() => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PagedResponse<InventoryAdjustmentResponse>>> List(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        CancellationToken cancellationToken = default) =>
+        Ok(await inventoryAdjustmentService.ListAsync(page, pageSize, cancellationToken));
 
     [HttpGet("{adjustmentId:guid}")]
-    public IActionResult Get(Guid adjustmentId) => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<InventoryAdjustmentResponse>> Get(
+        Guid adjustmentId,
+        CancellationToken cancellationToken) =>
+        Ok(await inventoryAdjustmentService.GetAsync(adjustmentId, cancellationToken));
 
     [HttpPost]
-    public IActionResult Create() => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<InventoryAdjustmentResponse>> Create(
+        CreateInventoryAdjustmentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var adjustment = await inventoryAdjustmentService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(Get), new { adjustmentId = adjustment.Id }, adjustment);
+    }
 
     [HttpPost("{adjustmentId:guid}/reverse")]
-    public IActionResult Reverse(Guid adjustmentId) => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<InventoryAdjustmentResponse>> Reverse(
+        Guid adjustmentId,
+        ReverseInventoryAdjustmentRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await inventoryAdjustmentService.ReverseAsync(adjustmentId, request, cancellationToken));
 }

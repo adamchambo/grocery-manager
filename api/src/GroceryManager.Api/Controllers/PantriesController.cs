@@ -1,17 +1,31 @@
+using GroceryManager.Api.Dtos.Pantry;
+using GroceryManager.Api.Services.Pantry;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GroceryManager.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/pantries")]
-public sealed class PantriesController : ControllerBase
+public sealed class PantriesController(IPantryService pantryService) : ControllerBase
 {
     [HttpPost]
-    public IActionResult Create() => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PantryResponse>> Create(
+        CreatePantryRequest request,
+        CancellationToken cancellationToken)
+    {
+        var pantry = await pantryService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetCurrent), pantry);
+    }
 
     [HttpGet("current")]
-    public IActionResult GetCurrent() => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PantryResponse>> GetCurrent(CancellationToken cancellationToken) =>
+        Ok(await pantryService.GetCurrentAsync(cancellationToken));
 
     [HttpPut("current")]
-    public IActionResult UpdateCurrent() => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PantryResponse>> UpdateCurrent(
+        UpdatePantryRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await pantryService.UpdateCurrentAsync(request, cancellationToken));
 }

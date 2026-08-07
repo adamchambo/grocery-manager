@@ -1,26 +1,55 @@
+using GroceryManager.Api.Common.Dtos;
+using GroceryManager.Api.Dtos.Pantry;
+using GroceryManager.Api.Services.Pantry;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GroceryManager.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/pantry-items")]
-public sealed class PantryItemsController : ControllerBase
+public sealed class PantryItemsController(IPantryItemService pantryItemService) : ControllerBase
 {
     [HttpGet]
-    public IActionResult List() => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PagedResponse<PantryItemResponse>>> List(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25,
+        [FromQuery] string? search = null,
+        CancellationToken cancellationToken = default) =>
+        Ok(await pantryItemService.ListAsync(page, pageSize, search, cancellationToken));
 
     [HttpPost]
-    public IActionResult Create() => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PantryItemResponse>> Create(
+        CreatePantryItemRequest request,
+        CancellationToken cancellationToken)
+    {
+        var item = await pantryItemService.CreateAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(Get), new { itemId = item.Id }, item);
+    }
 
     [HttpGet("{itemId:guid}")]
-    public IActionResult Get(Guid itemId) => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PantryItemResponse>> Get(Guid itemId, CancellationToken cancellationToken) =>
+        Ok(await pantryItemService.GetAsync(itemId, cancellationToken));
 
     [HttpPut("{itemId:guid}")]
-    public IActionResult Update(Guid itemId) => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PantryItemResponse>> Update(
+        Guid itemId,
+        UpdatePantryItemRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await pantryItemService.UpdateAsync(itemId, request, cancellationToken));
 
     [HttpDelete("{itemId:guid}")]
-    public IActionResult Archive(Guid itemId) => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<IActionResult> Archive(Guid itemId, CancellationToken cancellationToken)
+    {
+        await pantryItemService.ArchiveAsync(itemId, cancellationToken);
+        return NoContent();
+    }
 
     [HttpPut("{itemId:guid}/locations")]
-    public IActionResult UpdateLocations(Guid itemId) => StatusCode(StatusCodes.Status501NotImplemented);
+    public async Task<ActionResult<PantryItemResponse>> UpdateLocations(
+        Guid itemId,
+        UpdatePantryItemLocationsRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await pantryItemService.UpdateLocationsAsync(itemId, request, cancellationToken));
 }
