@@ -1,10 +1,10 @@
-using GroceryManager.Modules.Entitlements.Entities;
-using GroceryManager.Modules.Identity.Entities;
-using GroceryManager.Modules.InventoryHistory.Entities;
-using GroceryManager.Modules.Pantry.Entities;
-using GroceryManager.Modules.Shopping.Entities;
-using GroceryManager.Modules.ShoppingPresets.Entities;
-using GroceryManager.Modules.Stocktakes.Entities;
+using GroceryManager.Api.Entities.Entitlements;
+using GroceryManager.Api.Entities.Identity;
+using GroceryManager.Api.Entities.InventoryHistory;
+using GroceryManager.Api.Entities.Pantry;
+using GroceryManager.Api.Entities.Shopping;
+using GroceryManager.Api.Entities.ShoppingPresets;
+using GroceryManager.Api.Entities.Stocktakes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

@@ -18,15 +18,4 @@
     <PackageReference Include="Scalar.AspNetCore" Version="2.16.17" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Modules\Documents\GroceryManager.Modules.Documents.csproj" />
-    <ProjectReference Include="..\Modules\Entitlements\GroceryManager.Modules.Entitlements.csproj" />
-    <ProjectReference Include="..\Modules\Identity\GroceryManager.Modules.Identity.csproj" />
-    <ProjectReference Include="..\Modules\InventoryHistory\GroceryManager.Modules.InventoryHistory.csproj" />
-    <ProjectReference Include="..\Modules\Pantry\GroceryManager.Modules.Pantry.csproj" />
-    <ProjectReference Include="..\Modules\Shopping\GroceryManager.Modules.Shopping.csproj" />
-    <ProjectReference Include="..\Modules\ShoppingPresets\GroceryManager.Modules.ShoppingPresets.csproj" />
-    <ProjectReference Include="..\Modules\Stocktakes\GroceryManager.Modules.Stocktakes.csproj" />
-  </ItemGroup>
-
 </Project>

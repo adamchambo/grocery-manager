@@ -2,6 +2,6 @@ namespace GroceryManager.Api.Services.Identity;
 
 public interface ICurrentUserContext
 {
-    Guid? UserId { get; }
-    bool IsAuthenticated { get; }
+    public Guid? UserId { get; }
+    public bool IsAuthenticated { get; }
 }

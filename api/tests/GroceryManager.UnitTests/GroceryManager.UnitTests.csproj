@@ -19,12 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Modules\Identity\GroceryManager.Modules.Identity.csproj" />
-    <ProjectReference Include="..\..\src\Modules\Pantry\GroceryManager.Modules.Pantry.csproj" />
-    <ProjectReference Include="..\..\src\Modules\ShoppingPresets\GroceryManager.Modules.ShoppingPresets.csproj" />
-    <ProjectReference Include="..\..\src\Modules\Stocktakes\GroceryManager.Modules.Stocktakes.csproj" />
-    <ProjectReference Include="..\..\src\Modules\Shopping\GroceryManager.Modules.Shopping.csproj" />
-    <ProjectReference Include="..\..\src\Modules\InventoryHistory\GroceryManager.Modules.InventoryHistory.csproj" />
+    <ProjectReference Include="..\..\src\GroceryManager.Api\GroceryManager.Api.csproj" />
   </ItemGroup>
 
 </Project>

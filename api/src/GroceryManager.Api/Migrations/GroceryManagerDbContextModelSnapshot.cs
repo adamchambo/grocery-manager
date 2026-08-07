@@ -23,7 +23,7 @@ namespace GroceryManager.Api.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "citext");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("GroceryManager.Modules.Entitlements.Entities.Entitlement", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Entitlements.Entitlement", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -47,7 +47,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("Entitlements", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Entitlements.Entities.Plan", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Entitlements.Plan", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -74,7 +74,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("Plans", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Entitlements.Entities.PlanEntitlement", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Entitlements.PlanEntitlement", b =>
                 {
                     b.Property<Guid>("PlanId")
                         .HasColumnType("uuid");
@@ -95,7 +95,7 @@ namespace GroceryManager.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Identity.Entities.ApplicationUser", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Identity.ApplicationUser", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -160,7 +160,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.InventoryHistory.Entities.InventoryAdjustment", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.InventoryHistory.InventoryAdjustment", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -228,7 +228,7 @@ namespace GroceryManager.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.Category", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.Category", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -271,7 +271,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("Categories", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.ItemTemplate", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.ItemTemplate", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -303,7 +303,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("ItemTemplates", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.Pantry", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.Pantry", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -336,7 +336,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("Pantries", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.PantryItem", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.PantryItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -427,7 +427,7 @@ namespace GroceryManager.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.PantryItemLocation", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.PantryItemLocation", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -469,7 +469,7 @@ namespace GroceryManager.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.StorageLocation", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.StorageLocation", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -514,7 +514,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("StorageLocations", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Shopping.Entities.ShoppingList", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Shopping.ShoppingList", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -566,7 +566,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("ShoppingLists", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Shopping.Entities.ShoppingListItem", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Shopping.ShoppingListItem", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -650,7 +650,7 @@ namespace GroceryManager.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.ShoppingPresets.Entities.PresetCategory", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.ShoppingPresets.PresetCategory", b =>
                 {
                     b.Property<Guid>("ShoppingPresetId")
                         .HasColumnType("uuid");
@@ -665,7 +665,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("PresetCategories", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.ShoppingPresets.Entities.PresetItemRule", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.ShoppingPresets.PresetItemRule", b =>
                 {
                     b.Property<Guid>("ShoppingPresetId")
                         .HasColumnType("uuid");
@@ -685,7 +685,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("PresetItemRules", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.ShoppingPresets.Entities.ShoppingPreset", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.ShoppingPresets.ShoppingPreset", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -730,7 +730,7 @@ namespace GroceryManager.Api.Migrations
                         });
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Stocktakes.Entities.Stocktake", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Stocktakes.Stocktake", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -768,7 +768,7 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("Stocktakes", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Stocktakes.Entities.StocktakeEntry", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Stocktakes.StocktakeEntry", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -969,218 +969,218 @@ namespace GroceryManager.Api.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Entitlements.Entities.PlanEntitlement", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Entitlements.PlanEntitlement", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Entitlements.Entities.Entitlement", null)
+                    b.HasOne("GroceryManager.Api.Entities.Entitlements.Entitlement", null)
                         .WithMany()
                         .HasForeignKey("EntitlementId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.Entitlements.Entities.Plan", null)
+                    b.HasOne("GroceryManager.Api.Entities.Entitlements.Plan", null)
                         .WithMany()
                         .HasForeignKey("PlanId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.InventoryHistory.Entities.InventoryAdjustment", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.InventoryHistory.InventoryAdjustment", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Identity.Entities.ApplicationUser", null)
+                    b.HasOne("GroceryManager.Api.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.PantryItemLocation", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.PantryItemLocation", null)
                         .WithMany()
                         .HasForeignKey("PantryItemLocationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.InventoryHistory.Entities.InventoryAdjustment", null)
+                    b.HasOne("GroceryManager.Api.Entities.InventoryHistory.InventoryAdjustment", null)
                         .WithOne()
-                        .HasForeignKey("GroceryManager.Modules.InventoryHistory.Entities.InventoryAdjustment", "ReversesAdjustmentId")
+                        .HasForeignKey("GroceryManager.Api.Entities.InventoryHistory.InventoryAdjustment", "ReversesAdjustmentId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("GroceryManager.Modules.Shopping.Entities.ShoppingListItem", null)
+                    b.HasOne("GroceryManager.Api.Entities.Shopping.ShoppingListItem", null)
                         .WithOne()
-                        .HasForeignKey("GroceryManager.Modules.InventoryHistory.Entities.InventoryAdjustment", "SourceShoppingListItemId")
+                        .HasForeignKey("GroceryManager.Api.Entities.InventoryHistory.InventoryAdjustment", "SourceShoppingListItemId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("GroceryManager.Modules.Stocktakes.Entities.StocktakeEntry", null)
+                    b.HasOne("GroceryManager.Api.Entities.Stocktakes.StocktakeEntry", null)
                         .WithOne()
-                        .HasForeignKey("GroceryManager.Modules.InventoryHistory.Entities.InventoryAdjustment", "SourceStocktakeEntryId")
+                        .HasForeignKey("GroceryManager.Api.Entities.InventoryHistory.InventoryAdjustment", "SourceStocktakeEntryId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.Category", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.Category", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.Pantry", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Pantry", null)
                         .WithMany()
                         .HasForeignKey("PantryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.Pantry", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.Pantry", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Identity.Entities.ApplicationUser", null)
+                    b.HasOne("GroceryManager.Api.Entities.Identity.ApplicationUser", null)
                         .WithOne()
-                        .HasForeignKey("GroceryManager.Modules.Pantry.Entities.Pantry", "OwnerUserId")
+                        .HasForeignKey("GroceryManager.Api.Entities.Pantry.Pantry", "OwnerUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.PantryItem", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.PantryItem", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.Category", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Category", null)
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.StorageLocation", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.StorageLocation", null)
                         .WithMany()
                         .HasForeignKey("DefaultStorageLocationId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.Pantry", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Pantry", null)
                         .WithMany()
                         .HasForeignKey("PantryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.ItemTemplate", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.ItemTemplate", null)
                         .WithMany()
                         .HasForeignKey("SourceTemplateId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.PantryItemLocation", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.PantryItemLocation", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.PantryItem", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.PantryItem", null)
                         .WithMany()
                         .HasForeignKey("PantryItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.StorageLocation", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.StorageLocation", null)
                         .WithMany()
                         .HasForeignKey("StorageLocationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Pantry.Entities.StorageLocation", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.StorageLocation", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.Pantry", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Pantry", null)
                         .WithMany()
                         .HasForeignKey("PantryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Shopping.Entities.ShoppingList", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Shopping.ShoppingList", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.Pantry", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Pantry", null)
                         .WithMany()
                         .HasForeignKey("PantryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.ShoppingPresets.Entities.ShoppingPreset", null)
+                    b.HasOne("GroceryManager.Api.Entities.ShoppingPresets.ShoppingPreset", null)
                         .WithMany()
                         .HasForeignKey("SourcePresetId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("GroceryManager.Modules.Stocktakes.Entities.Stocktake", null)
+                    b.HasOne("GroceryManager.Api.Entities.Stocktakes.Stocktake", null)
                         .WithOne()
-                        .HasForeignKey("GroceryManager.Modules.Shopping.Entities.ShoppingList", "SourceStocktakeId")
+                        .HasForeignKey("GroceryManager.Api.Entities.Shopping.ShoppingList", "SourceStocktakeId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Shopping.Entities.ShoppingListItem", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Shopping.ShoppingListItem", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.StorageLocation", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.StorageLocation", null)
                         .WithMany()
                         .HasForeignKey("DestinationLocationId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.PantryItem", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.PantryItem", null)
                         .WithMany()
                         .HasForeignKey("PantryItemId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("GroceryManager.Modules.Shopping.Entities.ShoppingList", null)
+                    b.HasOne("GroceryManager.Api.Entities.Shopping.ShoppingList", null)
                         .WithMany()
                         .HasForeignKey("ShoppingListId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.ShoppingPresets.Entities.PresetCategory", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.ShoppingPresets.PresetCategory", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.Category", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Category", null)
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.ShoppingPresets.Entities.ShoppingPreset", null)
+                    b.HasOne("GroceryManager.Api.Entities.ShoppingPresets.ShoppingPreset", null)
                         .WithMany()
                         .HasForeignKey("ShoppingPresetId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.ShoppingPresets.Entities.PresetItemRule", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.ShoppingPresets.PresetItemRule", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.PantryItem", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.PantryItem", null)
                         .WithMany()
                         .HasForeignKey("PantryItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.ShoppingPresets.Entities.ShoppingPreset", null)
+                    b.HasOne("GroceryManager.Api.Entities.ShoppingPresets.ShoppingPreset", null)
                         .WithMany()
                         .HasForeignKey("ShoppingPresetId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.ShoppingPresets.Entities.ShoppingPreset", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.ShoppingPresets.ShoppingPreset", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.Pantry", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Pantry", null)
                         .WithMany()
                         .HasForeignKey("PantryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Stocktakes.Entities.Stocktake", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Stocktakes.Stocktake", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.Pantry", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Pantry", null)
                         .WithMany()
                         .HasForeignKey("PantryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.ShoppingPresets.Entities.ShoppingPreset", null)
+                    b.HasOne("GroceryManager.Api.Entities.ShoppingPresets.ShoppingPreset", null)
                         .WithMany()
                         .HasForeignKey("ShoppingPresetId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("GroceryManager.Modules.Stocktakes.Entities.StocktakeEntry", b =>
+            modelBuilder.Entity("GroceryManager.Api.Entities.Stocktakes.StocktakeEntry", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Pantry.Entities.PantryItemLocation", null)
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.PantryItemLocation", null)
                         .WithMany()
                         .HasForeignKey("PantryItemLocationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.Stocktakes.Entities.Stocktake", null)
+                    b.HasOne("GroceryManager.Api.Entities.Stocktakes.Stocktake", null)
                         .WithMany()
                         .HasForeignKey("StocktakeId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1198,7 +1198,7 @@ namespace GroceryManager.Api.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Identity.Entities.ApplicationUser", null)
+                    b.HasOne("GroceryManager.Api.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1207,7 +1207,7 @@ namespace GroceryManager.Api.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Identity.Entities.ApplicationUser", null)
+                    b.HasOne("GroceryManager.Api.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1222,7 +1222,7 @@ namespace GroceryManager.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GroceryManager.Modules.Identity.Entities.ApplicationUser", null)
+                    b.HasOne("GroceryManager.Api.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1231,7 +1231,7 @@ namespace GroceryManager.Api.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.HasOne("GroceryManager.Modules.Identity.Entities.ApplicationUser", null)
+                    b.HasOne("GroceryManager.Api.Entities.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

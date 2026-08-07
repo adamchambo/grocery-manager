@@ -1,5 +1,5 @@
 using GroceryManager.Api.Persistence;
-using GroceryManager.Modules.Identity.Entities;
+using GroceryManager.Api.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.HttpLogging;
