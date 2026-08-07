@@ -1,5 +1,12 @@
 using GroceryManager.Api.Persistence;
 using GroceryManager.Api.Entities.Identity;
+using GroceryManager.Api.Services.Documents;
+using GroceryManager.Api.Services.Identity;
+using GroceryManager.Api.Services.InventoryHistory;
+using GroceryManager.Api.Services.Pantry;
+using GroceryManager.Api.Services.Shopping;
+using GroceryManager.Api.Services.ShoppingPresets;
+using GroceryManager.Api.Services.Stocktakes;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.HttpLogging;
@@ -73,6 +80,19 @@ public static class ServiceCollectionExtensions
         services.AddAuthentication(IdentityConstants.ApplicationScheme)
             .AddIdentityCookies();
         services.AddAuthorization();
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUserContext, CurrentUserContext>();
+        services.AddScoped<IAccountService, AccountService>();
+        services.AddScoped<IPantryService, PantryService>();
+        services.AddScoped<IPantryItemService, PantryItemService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IStorageLocationService, StorageLocationService>();
+        services.AddScoped<IItemTemplateService, ItemTemplateService>();
+        services.AddScoped<IShoppingPresetService, ShoppingPresetService>();
+        services.AddScoped<IStocktakeService, StocktakeService>();
+        services.AddScoped<IShoppingListService, ShoppingListService>();
+        services.AddScoped<IInventoryAdjustmentService, InventoryAdjustmentService>();
+        services.AddScoped<IShoppingListDocumentService, ShoppingListDocumentService>();
 
         return services;
     }
