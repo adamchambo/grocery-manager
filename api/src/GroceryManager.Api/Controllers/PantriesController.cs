@@ -6,4 +6,12 @@ namespace GroceryManager.Api.Controllers;
 [Route("api/pantries")]
 public sealed class PantriesController : ControllerBase
 {
+    [HttpPost]
+    public IActionResult Create() => StatusCode(StatusCodes.Status501NotImplemented);
+
+    [HttpGet("current")]
+    public IActionResult GetCurrent() => StatusCode(StatusCodes.Status501NotImplemented);
+
+    [HttpPut("current")]
+    public IActionResult UpdateCurrent() => StatusCode(StatusCodes.Status501NotImplemented);
 }
