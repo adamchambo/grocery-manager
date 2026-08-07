@@ -1,3 +1,5 @@
+using GroceryManager.Modules.Shopping.Enums;
+
 namespace GroceryManager.Modules.Shopping.Entities;
 
 public sealed class ShoppingListItem

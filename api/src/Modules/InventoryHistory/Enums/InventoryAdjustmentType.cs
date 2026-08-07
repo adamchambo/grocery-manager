@@ -1,4 +1,4 @@
-namespace GroceryManager.Modules.InventoryHistory.Entities;
+namespace GroceryManager.Modules.InventoryHistory.Enums;
 
 public enum InventoryAdjustmentType
 {

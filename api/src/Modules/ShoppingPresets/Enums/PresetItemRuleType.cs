@@ -1,4 +1,4 @@
-namespace GroceryManager.Modules.ShoppingPresets.Entities;
+namespace GroceryManager.Modules.ShoppingPresets.Enums;
 
 public enum PresetItemRuleType
 {

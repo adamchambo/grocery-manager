@@ -1,4 +1,4 @@
-namespace GroceryManager.Modules.Pantry.Entities;
+namespace GroceryManager.Modules.Pantry.Enums;
 
 public enum TrackingUnit
 {

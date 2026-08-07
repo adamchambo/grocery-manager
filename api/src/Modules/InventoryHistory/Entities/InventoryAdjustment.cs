@@ -1,3 +1,5 @@
+using GroceryManager.Modules.InventoryHistory.Enums;
+
 namespace GroceryManager.Modules.InventoryHistory.Entities;
 
 public sealed class InventoryAdjustment

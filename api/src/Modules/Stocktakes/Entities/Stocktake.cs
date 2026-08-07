@@ -1,3 +1,5 @@
+using GroceryManager.Modules.Stocktakes.Enums;
+
 namespace GroceryManager.Modules.Stocktakes.Entities;
 
 public sealed class Stocktake

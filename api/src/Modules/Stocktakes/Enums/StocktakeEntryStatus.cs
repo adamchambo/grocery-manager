@@ -1,4 +1,4 @@
-namespace GroceryManager.Modules.Stocktakes.Entities;
+namespace GroceryManager.Modules.Stocktakes.Enums;
 
 public enum StocktakeEntryStatus
 {

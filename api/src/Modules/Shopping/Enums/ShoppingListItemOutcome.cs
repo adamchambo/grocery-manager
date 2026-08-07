@@ -1,4 +1,4 @@
-namespace GroceryManager.Modules.Shopping.Entities;
+namespace GroceryManager.Modules.Shopping.Enums;
 
 public enum ShoppingListItemOutcome
 {

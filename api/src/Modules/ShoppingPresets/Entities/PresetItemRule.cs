@@ -1,3 +1,5 @@
+using GroceryManager.Modules.ShoppingPresets.Enums;
+
 namespace GroceryManager.Modules.ShoppingPresets.Entities;
 
 public sealed class PresetItemRule

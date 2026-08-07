@@ -1,3 +1,5 @@
+using GroceryManager.Modules.Pantry.Enums;
+
 namespace GroceryManager.Modules.Pantry.Entities;
 
 public sealed class PantryItem
