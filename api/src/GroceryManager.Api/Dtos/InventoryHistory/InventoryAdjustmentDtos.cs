@@ -6,8 +6,8 @@ namespace GroceryManager.Api.Dtos.InventoryHistory;
 public sealed record CreateInventoryAdjustmentRequest(
     Guid PantryItemLocationId,
     decimal QuantityDelta,
-    [property: StringLength(2000)] string? Notes,
-    [property: Required, StringLength(200)] string IdempotencyKey) : IValidatableObject
+    [StringLength(2000)] string? Notes,
+    [Required, StringLength(200)] string IdempotencyKey) : IValidatableObject
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -17,8 +17,8 @@ public sealed record CreateInventoryAdjustmentRequest(
 }
 
 public sealed record ReverseInventoryAdjustmentRequest(
-    [property: StringLength(2000)] string? Notes,
-    [property: Required, StringLength(200)] string IdempotencyKey);
+    [StringLength(2000)] string? Notes,
+    [Required, StringLength(200)] string IdempotencyKey);
 
 public sealed record InventoryAdjustmentResponse(
     Guid Id,

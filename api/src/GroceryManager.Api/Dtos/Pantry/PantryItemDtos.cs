@@ -5,24 +5,24 @@ namespace GroceryManager.Api.Dtos.Pantry;
 
 public sealed record PantryItemLocationRequest(
     Guid StorageLocationId,
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal CurrentQuantity,
-    [property: Range(0, int.MaxValue)] int SortOrder);
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal CurrentQuantity,
+    [Range(0, int.MaxValue)] int SortOrder);
 
 public sealed record CreatePantryItemRequest(
     Guid CategoryId,
     Guid? SourceTemplateId,
     Guid? DefaultStorageLocationId,
-    [property: Required, StringLength(160)] string Name,
-    [property: StringLength(120)] string? Brand,
-    [property: StringLength(200)] string? PreferredProduct,
-    [property: StringLength(2000)] string? Notes,
+    [Required, StringLength(160)] string Name,
+    [StringLength(120)] string? Brand,
+    [StringLength(200)] string? PreferredProduct,
+    [StringLength(2000)] string? Notes,
     TrackingUnit TrackingUnit,
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal? PackageSize,
-    [property: StringLength(32)] string? PackageUnit,
-    [property: Range(typeof(decimal), "0.001", "999999999999999.999")] decimal? ConsumptionQuantity,
-    [property: Range(typeof(decimal), "0.001", "999999999999999.999")] decimal? ConsumptionPeriodDays,
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal BufferDays,
-    [property: Required, MinLength(1)] IReadOnlyList<PantryItemLocationRequest> Locations) : IValidatableObject
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal? PackageSize,
+    [StringLength(32)] string? PackageUnit,
+    [Range(typeof(decimal), "0.001", "999999999999999.999")] decimal? ConsumptionQuantity,
+    [Range(typeof(decimal), "0.001", "999999999999999.999")] decimal? ConsumptionPeriodDays,
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal BufferDays,
+    [Required, MinLength(1)] IReadOnlyList<PantryItemLocationRequest> Locations) : IValidatableObject
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -36,17 +36,17 @@ public sealed record CreatePantryItemRequest(
 public sealed record UpdatePantryItemRequest(
     Guid CategoryId,
     Guid? DefaultStorageLocationId,
-    [property: Required, StringLength(160)] string Name,
-    [property: StringLength(120)] string? Brand,
-    [property: StringLength(200)] string? PreferredProduct,
-    [property: StringLength(2000)] string? Notes,
+    [Required, StringLength(160)] string Name,
+    [StringLength(120)] string? Brand,
+    [StringLength(200)] string? PreferredProduct,
+    [StringLength(2000)] string? Notes,
     TrackingUnit TrackingUnit,
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal? PackageSize,
-    [property: StringLength(32)] string? PackageUnit,
-    [property: Range(typeof(decimal), "0.001", "999999999999999.999")] decimal? ConsumptionQuantity,
-    [property: Range(typeof(decimal), "0.001", "999999999999999.999")] decimal? ConsumptionPeriodDays,
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal BufferDays,
-    [property: Required] string Version) : IValidatableObject
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal? PackageSize,
+    [StringLength(32)] string? PackageUnit,
+    [Range(typeof(decimal), "0.001", "999999999999999.999")] decimal? ConsumptionQuantity,
+    [Range(typeof(decimal), "0.001", "999999999999999.999")] decimal? ConsumptionPeriodDays,
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal BufferDays,
+    [Required] string Version) : IValidatableObject
 {
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
@@ -58,8 +58,8 @@ public sealed record UpdatePantryItemRequest(
 }
 
 public sealed record UpdatePantryItemLocationsRequest(
-    [property: Required, MinLength(1)] IReadOnlyList<PantryItemLocationRequest> Locations,
-    [property: Required] string ItemVersion);
+    [Required, MinLength(1)] IReadOnlyList<PantryItemLocationRequest> Locations,
+    [Required] string ItemVersion);
 
 public sealed record PantryItemLocationResponse(
     Guid Id,

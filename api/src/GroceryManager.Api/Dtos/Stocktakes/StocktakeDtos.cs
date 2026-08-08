@@ -8,15 +8,15 @@ public sealed record StartStocktakeRequest(Guid? ShoppingPresetId);
 
 public sealed record UpdateStocktakeEntryRequest(
     StocktakeEntryStatus Status,
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal? RecordedQuantity,
-    [property: Required] string Version);
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal? RecordedQuantity,
+    [Required] string Version);
 
 public sealed record AddDiscoveredStocktakeItemRequest(
-    [property: Required, StringLength(160)] string Name,
+    [Required, StringLength(160)] string Name,
     Guid CategoryId,
     Guid StorageLocationId,
     TrackingUnit TrackingUnit,
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal RecordedQuantity);
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal RecordedQuantity);
 
 public sealed record StocktakeEntryResponse(
     Guid Id,

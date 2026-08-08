@@ -6,23 +6,23 @@ namespace GroceryManager.Api.Dtos.Shopping;
 public sealed record GenerateShoppingListRequest(
     Guid? ShoppingPresetId,
     Guid? StocktakeId,
-    [property: StringLength(160)] string? Name);
+    [StringLength(160)] string? Name);
 
 public sealed record UpdateShoppingListRequest(
-    [property: Required, StringLength(160)] string Name,
-    [property: Required] string Version);
+    [Required, StringLength(160)] string Name,
+    [Required] string Version);
 
 public sealed record AddShoppingListItemRequest(
-    [property: Required, StringLength(160)] string Name,
-    [property: Range(typeof(decimal), "0.001", "999999999999999.999")] decimal SuggestedPurchaseQuantity,
+    [Required, StringLength(160)] string Name,
+    [Range(typeof(decimal), "0.001", "999999999999999.999")] decimal SuggestedPurchaseQuantity,
     Guid? DestinationLocationId);
 
 public sealed record UpdateShoppingListItemRequest(
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal? SuggestedPurchaseQuantity,
-    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal? ActualPurchaseQuantity,
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal? SuggestedPurchaseQuantity,
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal? ActualPurchaseQuantity,
     ShoppingListItemOutcome Outcome,
     Guid? DestinationLocationId,
-    [property: Required] string Version);
+    [Required] string Version);
 
 public sealed record ShoppingListItemResponse(
     Guid Id,
