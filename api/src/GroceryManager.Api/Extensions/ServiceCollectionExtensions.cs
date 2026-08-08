@@ -76,6 +76,7 @@ public static class ServiceCollectionExtensions
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
         services.AddIdentityCore<ApplicationUser>()
             .AddRoles<IdentityRole<Guid>>()
+            .AddSignInManager()
             .AddEntityFrameworkStores<GroceryManagerDbContext>();
         services.AddAuthentication(IdentityConstants.ApplicationScheme)
             .AddIdentityCookies();
