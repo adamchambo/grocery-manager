@@ -20,7 +20,10 @@ namespace GroceryManager.Api.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddApplicationServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         services.AddProblemDetails();
         services.AddExceptionHandler<ApiExceptionHandler>();
@@ -84,6 +87,11 @@ public static class ServiceCollectionExtensions
             .AddIdentityCookies();
         services.AddAuthorization();
         services.AddHttpContextAccessor();
+        services.Configure<PasswordResetOptions>(configuration.GetSection(PasswordResetOptions.SectionName));
+        if (environment.IsDevelopment())
+            services.AddScoped<IPasswordResetEmailSender, DevelopmentPasswordResetEmailSender>();
+        else
+            services.AddScoped<IPasswordResetEmailSender, UnconfiguredPasswordResetEmailSender>();
         services.AddScoped<ICurrentUserContext, CurrentUserContext>();
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IPantryService, PantryService>();

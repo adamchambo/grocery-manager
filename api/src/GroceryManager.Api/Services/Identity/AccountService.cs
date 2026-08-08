@@ -2,13 +2,17 @@ using GroceryManager.Api.Dtos.Identity;
 using GroceryManager.Api.Entities.Identity;
 using GroceryManager.Api.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
 
 namespace GroceryManager.Api.Services.Identity;
 
 public sealed class AccountService(
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
-    ICurrentUserContext currentUser) : IAccountService
+    ICurrentUserContext currentUser,
+    IPasswordResetEmailSender passwordResetEmailSender,
+    IOptions<PasswordResetOptions> passwordResetOptions) : IAccountService
 {
     public async Task<AccountResponse> RegisterAsync(RegisterAccountRequest request, CancellationToken cancellationToken)
     {
@@ -39,7 +43,18 @@ public sealed class AccountService(
     {
         cancellationToken.ThrowIfCancellationRequested();
         var user = await userManager.FindByEmailAsync(request.Email.Trim());
-        if (user is not null) _ = await userManager.GeneratePasswordResetTokenAsync(user);
+        if (user is null) return;
+
+        if (!Uri.TryCreate(passwordResetOptions.Value.ClientUrl, UriKind.Absolute, out var clientUrl))
+            throw new InvalidOperationException("PasswordReset:ClientUrl is not configured with an absolute URL.");
+
+        var token = await userManager.GeneratePasswordResetTokenAsync(user);
+        var resetUrl = QueryHelpers.AddQueryString(clientUrl.ToString(), new Dictionary<string, string?>
+        {
+            ["email"] = user.Email,
+            ["token"] = token
+        });
+        await passwordResetEmailSender.SendAsync(user.Email!, resetUrl, cancellationToken);
     }
 
     public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken)
