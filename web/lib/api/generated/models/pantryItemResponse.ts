@@ -17,6 +17,8 @@ export interface PantryItemResponse {
   defaultStorageLocationId: string | null;
   name: string;
   /** @nullable */
+  icon: string | null;
+  /** @nullable */
   brand: string | null;
   /** @nullable */
   preferredProduct: string | null;

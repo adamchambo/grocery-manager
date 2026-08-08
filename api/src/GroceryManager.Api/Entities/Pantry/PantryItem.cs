@@ -10,6 +10,7 @@ public sealed class PantryItem
     public Guid? SourceTemplateId { get; set; }
     public Guid? DefaultStorageLocationId { get; set; }
     public required string Name { get; set; }
+    public string? Icon { get; set; }
     public string? Brand { get; set; }
     public string? PreferredProduct { get; set; }
     public string? Notes { get; set; }

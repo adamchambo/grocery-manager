@@ -17,6 +17,12 @@ export interface UpdatePantryItemRequest {
   name: string;
   /**
      * @minLength 0
+     * @maxLength 100
+     * @nullable
+     */
+  icon: string | null;
+  /**
+     * @minLength 0
      * @maxLength 120
      * @nullable
      */

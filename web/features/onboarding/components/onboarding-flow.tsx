@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 
-import { getAuthErrorMessage } from "@/features/auth/utilities/get-auth-error-message"
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message"
 import { PantryAssignmentBoard } from "@/features/onboarding/components/pantry-assignment-board"
 import { ApiError } from "@/lib/api/api-client"
 import { getApiCategories } from "@/lib/api/generated/categories/categories"
@@ -12,7 +12,6 @@ import type { CategoryResponse, ItemTemplateResponse, StorageLocationResponse } 
 import { getApiPantriesCurrent, postApiPantries } from "@/lib/api/generated/pantries/pantries"
 import { getApiPantryItems, postApiPantryItems } from "@/lib/api/generated/pantry-items/pantry-items"
 import { deleteApiStorageLocationsLocationId, getApiStorageLocations, putApiStorageLocationsOrder } from "@/lib/api/generated/storage-locations/storage-locations"
-import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert"
 import { Button } from "@/shared/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Checkbox } from "@/shared/components/ui/checkbox"
@@ -20,6 +19,7 @@ import { Field, FieldLabel } from "@/shared/components/ui/field"
 import { Input } from "@/shared/components/ui/input"
 import { Progress } from "@/shared/components/ui/progress"
 import { Spinner } from "@/shared/components/ui/spinner"
+import { useErrorToast } from "@/shared/hooks/use-error-toast"
 
 const draftKey = "grocery-manager:onboarding:selected-template-ids"
 
@@ -39,6 +39,7 @@ export function OnboardingFlow() {
   const [error, setError] = useState<string>()
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  useErrorToast(error)
 
   useEffect(() => {
     async function load() {
@@ -68,7 +69,7 @@ export function OnboardingFlow() {
           router.replace("/login")
           return
         }
-        setError(getAuthErrorMessage(loadError, "Unable to load onboarding."))
+        setError(getApiErrorMessage(loadError, "Unable to load onboarding."))
       } finally {
         setIsLoading(false)
       }
@@ -107,7 +108,7 @@ export function OnboardingFlow() {
       setLocationOrder(pantryLocations.map((location) => location.id))
       setStep(1)
     } catch (submissionError) {
-      setError(getAuthErrorMessage(submissionError, "Unable to create your pantry."))
+      setError(getApiErrorMessage(submissionError, "Unable to create your pantry."))
     } finally {
       setIsSubmitting(false)
     }
@@ -176,6 +177,7 @@ export function OnboardingFlow() {
           sourceTemplateId: template.id,
           defaultStorageLocationId: assignedLocationId,
           name: template.name,
+          icon: null,
           brand: null,
           preferredProduct: null,
           notes: null,
@@ -202,7 +204,7 @@ export function OnboardingFlow() {
       localStorage.removeItem(draftKey)
       setStep(3)
     } catch (submissionError) {
-      setError(getAuthErrorMessage(submissionError, "Unable to add the selected pantry items."))
+      setError(getApiErrorMessage(submissionError, "Unable to add the selected pantry items."))
     } finally {
       setIsSubmitting(false)
     }
@@ -221,8 +223,6 @@ export function OnboardingFlow() {
         </div>
         <Progress value={(Math.min(step + 1, 4) / 4) * 100} />
       </div>
-
-      {error && <Alert variant="destructive"><AlertTitle>Something went wrong</AlertTitle><AlertDescription>{error}</AlertDescription></Alert>}
 
       {step === 0 && (
         <Card>

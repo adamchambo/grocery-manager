@@ -44,7 +44,7 @@ public sealed class PantryItemService(
         {
             Id = Guid.NewGuid(), PantryId = pantryId, CategoryId = request.CategoryId,
             SourceTemplateId = request.SourceTemplateId, DefaultStorageLocationId = request.DefaultStorageLocationId,
-            Name = request.Name.Trim(), Brand = request.Brand?.Trim(), PreferredProduct = request.PreferredProduct?.Trim(),
+            Name = request.Name.Trim(), Icon = request.Icon?.Trim(), Brand = request.Brand?.Trim(), PreferredProduct = request.PreferredProduct?.Trim(),
             Notes = request.Notes?.Trim(), TrackingUnit = request.TrackingUnit, PackageSize = request.PackageSize,
             PackageUnit = request.PackageUnit?.Trim(), ConsumptionQuantity = request.ConsumptionQuantity,
             ConsumptionPeriodDays = request.ConsumptionPeriodDays, BufferDays = request.BufferDays,
@@ -69,7 +69,7 @@ public sealed class PantryItemService(
         ServiceSupport.ApplyVersion(db, item, request.Version);
         item.CategoryId = request.CategoryId;
         item.DefaultStorageLocationId = request.DefaultStorageLocationId;
-        item.Name = request.Name.Trim(); item.Brand = request.Brand?.Trim();
+        item.Name = request.Name.Trim(); item.Icon = request.Icon?.Trim(); item.Brand = request.Brand?.Trim();
         item.PreferredProduct = request.PreferredProduct?.Trim(); item.Notes = request.Notes?.Trim();
         item.TrackingUnit = request.TrackingUnit; item.PackageSize = request.PackageSize;
         item.PackageUnit = request.PackageUnit?.Trim(); item.ConsumptionQuantity = request.ConsumptionQuantity;
@@ -166,7 +166,7 @@ public sealed class PantryItemService(
 
     private static PantryItemResponse ToResponse(PantryItem x, string categoryName,
         IEnumerable<PantryItemLocation> locations, Dictionary<Guid, string> locationNames) =>
-        new(x.Id, x.CategoryId, categoryName, x.SourceTemplateId, x.DefaultStorageLocationId, x.Name, x.Brand,
+        new(x.Id, x.CategoryId, categoryName, x.SourceTemplateId, x.DefaultStorageLocationId, x.Name, x.Icon, x.Brand,
             x.PreferredProduct, x.Notes, x.TrackingUnit, x.PackageSize, x.PackageUnit, x.ConsumptionQuantity,
             x.ConsumptionPeriodDays, x.BufferDays, x.IsArchived,
             locations.OrderBy(y => y.SortOrder).Select(y => new PantryItemLocationResponse(y.Id, y.StorageLocationId,

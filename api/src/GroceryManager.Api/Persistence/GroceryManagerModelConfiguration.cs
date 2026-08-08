@@ -90,6 +90,7 @@ internal static class GroceryManagerModelConfiguration
         });
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).HasColumnType("citext").HasMaxLength(160).IsRequired();
+        builder.Property(x => x.Icon).HasMaxLength(100);
         builder.Property(x => x.Brand).HasMaxLength(120);
         builder.Property(x => x.PreferredProduct).HasMaxLength(200);
         builder.Property(x => x.Notes).HasMaxLength(2000);

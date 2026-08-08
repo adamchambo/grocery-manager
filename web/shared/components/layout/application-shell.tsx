@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useState } from "react"
 import {
   BoxesIcon,
   ClipboardCheckIcon,
@@ -9,13 +10,17 @@ import {
   HistoryIcon,
   HouseIcon,
   ListChecksIcon,
+  LogOutIcon,
   SettingsIcon,
   SlidersHorizontalIcon,
   UserIcon,
 } from "lucide-react"
+import { toast } from "sonner"
 
+import { postApiAccountsLogout } from "@/lib/api/generated/accounts/accounts"
 import { cn } from "@/lib/utilities/cn"
 import { Brand } from "@/shared/components/layout/brand"
+import { ThemeToggle } from "@/shared/components/layout/theme-toggle"
 import { Button } from "@/shared/components/ui/button"
 import {
   DropdownMenu,
@@ -36,8 +41,9 @@ const primaryItems = [
 const moreItems = [
   { href: "/app/presets", label: "Shopping presets", icon: SlidersHorizontalIcon },
   { href: "/app/history", label: "Inventory history", icon: HistoryIcon },
-  { href: "/app/settings/account", label: "Settings", icon: SettingsIcon },
 ] as const
+
+const settingsItem = { href: "/app/settings/account", label: "Settings", icon: SettingsIcon } as const
 
 function isActive(pathname: string, href: string, exact = false) {
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
@@ -45,7 +51,22 @@ function isActive(pathname: string, href: string, exact = false) {
 
 export function ApplicationShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const moreIsActive = moreItems.some((item) => isActive(pathname, item.href))
+    || isActive(pathname, settingsItem.href)
+
+  async function signOut() {
+    setIsSigningOut(true)
+    try {
+      await postApiAccountsLogout()
+      router.replace("/login")
+      router.refresh()
+    } catch {
+      toast.error("Unable to sign out. Please try again.")
+      setIsSigningOut(false)
+    }
+  }
 
   return (
     <div className="min-h-svh bg-background">
@@ -60,15 +81,25 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
             <DesktopNavLink key={item.href} item={item} active={isActive(pathname, item.href)} />
           ))}
         </nav>
+        <div className="space-y-1 border-t pt-4">
+          <DesktopNavLink item={settingsItem} active={isActive(pathname, settingsItem.href)} />
+          <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-muted-foreground" onClick={signOut} disabled={isSigningOut}>
+            <LogOutIcon className="size-4" aria-hidden="true" />
+            {isSigningOut ? "Signing out…" : "Sign out"}
+          </Button>
+        </div>
       </aside>
 
       <div className="md:pl-64">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur sm:px-6">
           <Brand className="md:hidden" />
           <p className="hidden text-sm text-muted-foreground md:block">Your pantry, kept practical.</p>
-          <Button variant="ghost" size="icon" aria-label="Open account settings" asChild>
-            <Link href="/app/settings/account"><UserIcon aria-hidden="true" /></Link>
-          </Button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" aria-label="Open account settings" asChild>
+              <Link href="/app/settings/account"><UserIcon aria-hidden="true" /></Link>
+            </Button>
+          </div>
         </header>
         <main className="mx-auto w-full max-w-7xl px-4 py-6 pb-24 sm:px-6 md:pb-8 lg:px-8">{children}</main>
       </div>
@@ -92,6 +123,13 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
                 <Link href={item.href}><item.icon aria-hidden="true" />{item.label}</Link>
               </DropdownMenuItem>
             ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href={settingsItem.href}><SettingsIcon aria-hidden="true" />Settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => void signOut()} disabled={isSigningOut}>
+              <LogOutIcon aria-hidden="true" />{isSigningOut ? "Signing out…" : "Sign out"}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </nav>
@@ -99,7 +137,7 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
   )
 }
 
-type NavigationItem = (typeof primaryItems)[number] | (typeof moreItems)[number]
+type NavigationItem = (typeof primaryItems)[number] | (typeof moreItems)[number] | typeof settingsItem
 
 function DesktopNavLink({ item, active }: Readonly<{ item: NavigationItem; active: boolean }>) {
   return (

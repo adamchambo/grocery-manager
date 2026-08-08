@@ -178,7 +178,7 @@ public sealed class BackendFlowTests(PostgreSqlFixture fixture) : IClassFixture<
         var categoryId = await db.Categories.Where(x => x.PantryId == pantryId).Select(x => x.Id).FirstAsync();
         var locationId = await db.StorageLocations.Where(x => x.PantryId == pantryId).OrderBy(x => x.SortOrder).Select(x => x.Id).FirstAsync();
         return await new PantryItemService(db, new TestCurrentUserContext(userId)).CreateAsync(
-            new CreatePantryItemRequest(categoryId, null, locationId, name, null, null, null, unit, null, null,
+            new CreatePantryItemRequest(categoryId, null, locationId, name, null, null, null, null, unit, null, null,
                 consumptionQuantity, consumptionPeriodDays, 0,
                 [new PantryItemLocationRequest(locationId, currentQuantity, 0)]),
             CancellationToken.None);

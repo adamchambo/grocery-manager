@@ -14,9 +14,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
 
   return (
-    <Sonner
-      theme={theme as ToasterProps["theme"]}
-      className="toaster group"
+      <Sonner
+        theme={theme as ToasterProps["theme"]}
+        richColors
+        className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,

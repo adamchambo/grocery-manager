@@ -4,18 +4,19 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
 
-import { getAuthErrorMessage } from "@/features/auth/utilities/get-auth-error-message"
+import { getApiErrorMessage } from "@/lib/api/get-api-error-message"
 import { postApiAccountsLogin } from "@/lib/api/generated/accounts/accounts"
-import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert"
 import { Button } from "@/shared/components/ui/button"
 import { Field, FieldGroup, FieldLabel } from "@/shared/components/ui/field"
 import { Input } from "@/shared/components/ui/input"
 import { Spinner } from "@/shared/components/ui/spinner"
+import { useErrorToast } from "@/shared/hooks/use-error-toast"
 
 export function LoginForm() {
   const router = useRouter()
   const [error, setError] = useState<string>()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  useErrorToast(error, "Login failed")
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -31,7 +32,7 @@ export function LoginForm() {
       })
       router.replace("/app")
     } catch (submissionError) {
-      setError(getAuthErrorMessage(submissionError, "Unable to log in."))
+      setError(getApiErrorMessage(submissionError, "Unable to log in."))
     } finally {
       setIsSubmitting(false)
     }
@@ -39,12 +40,6 @@ export function LoginForm() {
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      {error && (
-        <Alert variant="destructive">
-          <AlertTitle>Login failed</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
       <FieldGroup className="gap-5">
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>

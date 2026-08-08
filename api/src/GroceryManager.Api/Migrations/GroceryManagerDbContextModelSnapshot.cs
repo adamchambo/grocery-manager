@@ -367,6 +367,10 @@ namespace GroceryManager.Api.Migrations
                     b.Property<bool>("IsArchived")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Icon")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(160)

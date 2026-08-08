@@ -1,3 +1,5 @@
+import { PantryStructureManager } from "@/features/pantry/components/pantry-structure-manager"
+
 export default function CategoriesPage() {
-  return null;
+  return <PantryStructureManager kind="categories" />
 }
