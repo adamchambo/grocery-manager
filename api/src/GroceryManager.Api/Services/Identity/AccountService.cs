@@ -46,7 +46,7 @@ public sealed class AccountService(
     {
         cancellationToken.ThrowIfCancellationRequested();
         var user = await userManager.FindByEmailAsync(request.Email.Trim())
-            ?? throw new InvalidOperationException("The password reset request is invalid.");
+            ?? throw new ArgumentException("The password reset request is invalid.");
         ThrowIfFailed(await userManager.ResetPasswordAsync(user, request.Token, request.NewPassword));
     }
 
@@ -79,6 +79,6 @@ public sealed class AccountService(
     private static void ThrowIfFailed(IdentityResult result)
     {
         if (!result.Succeeded)
-            throw new InvalidOperationException(string.Join(" ", result.Errors.Select(x => x.Description)));
+            throw new ArgumentException(string.Join(" ", result.Errors.Select(x => x.Description)));
     }
 }

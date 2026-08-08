@@ -1,3 +1,4 @@
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.Pantry;
 using GroceryManager.Api.Entities.Pantry;
 using GroceryManager.Api.Persistence;
@@ -15,7 +16,7 @@ public sealed class PantryService(
     {
         var userId = ServiceSupport.RequireUserId(currentUser);
         if (await db.Pantries.AnyAsync(x => x.OwnerUserId == userId, cancellationToken))
-            throw new InvalidOperationException("The current user already has a pantry.");
+            throw new ConflictException("The current user already has a pantry.");
 
         var now = DateTimeOffset.UtcNow;
         var pantry = new Entities.Pantry.Pantry

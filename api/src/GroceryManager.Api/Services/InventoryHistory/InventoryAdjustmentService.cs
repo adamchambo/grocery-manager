@@ -1,4 +1,5 @@
 using GroceryManager.Api.Common.Dtos;
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.InventoryHistory;
 using GroceryManager.Api.Entities.InventoryHistory;
 using GroceryManager.Api.Enums.InventoryHistory;
@@ -35,7 +36,7 @@ public sealed class InventoryAdjustmentService(
         var existing = await db.InventoryAdjustments.AsNoTracking().SingleOrDefaultAsync(x => x.IdempotencyKey == request.IdempotencyKey, cancellationToken);
         if (existing is not null) return ToResponse(existing);
         if (location.CurrentQuantity + request.QuantityDelta < 0)
-            throw new InvalidOperationException("The adjustment would make inventory negative.");
+            throw new ConflictException("The adjustment would make inventory negative.");
 
         var adjustment = Create(location.Id, request.QuantityDelta, request.Notes, request.IdempotencyKey,
             InventoryAdjustmentType.Correction, null);
@@ -53,10 +54,10 @@ public sealed class InventoryAdjustmentService(
         var existing = await db.InventoryAdjustments.AsNoTracking().SingleOrDefaultAsync(x => x.IdempotencyKey == request.IdempotencyKey, cancellationToken);
         if (existing is not null) return ToResponse(existing);
         if (await db.InventoryAdjustments.AnyAsync(x => x.ReversesAdjustmentId == original.Id, cancellationToken))
-            throw new InvalidOperationException("This adjustment has already been reversed.");
+            throw new ConflictException("This adjustment has already been reversed.");
         var location = await db.PantryItemLocations.SingleAsync(x => x.Id == original.PantryItemLocationId, cancellationToken);
         if (location.CurrentQuantity - original.QuantityDelta < 0)
-            throw new InvalidOperationException("The reversal would make inventory negative.");
+            throw new ConflictException("The reversal would make inventory negative.");
 
         var reversal = Create(location.Id, -original.QuantityDelta, request.Notes, request.IdempotencyKey,
             InventoryAdjustmentType.Reversal, original.Id);

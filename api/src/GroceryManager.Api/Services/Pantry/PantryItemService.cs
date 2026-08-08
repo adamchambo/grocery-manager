@@ -1,4 +1,5 @@
 using GroceryManager.Api.Common.Dtos;
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.Pantry;
 using GroceryManager.Api.Entities.Pantry;
 using GroceryManager.Api.Persistence;
@@ -113,7 +114,7 @@ public sealed class PantryItemService(
             row.UpdatedAtUtc = now;
         }
         if (existing.Values.Any(x => x.CurrentQuantity != 0))
-            throw new InvalidOperationException("A location containing stock cannot be removed from an item.");
+            throw new ConflictException("A location containing stock cannot be removed from an item.");
         db.PantryItemLocations.RemoveRange(existing.Values);
         item.UpdatedAtUtc = now;
         await db.SaveChangesAsync(cancellationToken);

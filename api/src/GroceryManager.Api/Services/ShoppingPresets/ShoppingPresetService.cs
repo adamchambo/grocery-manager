@@ -1,3 +1,4 @@
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.ShoppingPresets;
 using GroceryManager.Api.Entities.ShoppingPresets;
 using GroceryManager.Api.Enums.ShoppingPresets;
@@ -43,7 +44,7 @@ public sealed class ShoppingPresetService(
     public async Task<ShoppingPresetResponse> UpdateAsync(Guid presetId, UpdateShoppingPresetRequest request, CancellationToken cancellationToken)
     {
         var preset = await FindAsync(presetId, cancellationToken);
-        if (preset.IsEverythingPreset) throw new InvalidOperationException("The Everything preset cannot be edited.");
+        if (preset.IsEverythingPreset) throw new ConflictException("The Everything preset cannot be edited.");
         await ValidateMembershipAsync(preset.PantryId, request.CategoryIds, request.ItemRules, cancellationToken);
         if (request.CoverageDays < 0) throw new ArgumentOutOfRangeException(nameof(request));
         ServiceSupport.ApplyVersion(db, preset, request.Version);
@@ -58,7 +59,7 @@ public sealed class ShoppingPresetService(
     public async Task ArchiveAsync(Guid presetId, CancellationToken cancellationToken)
     {
         var preset = await FindAsync(presetId, cancellationToken);
-        if (preset.IsEverythingPreset) throw new InvalidOperationException("The Everything preset cannot be archived.");
+        if (preset.IsEverythingPreset) throw new ConflictException("The Everything preset cannot be archived.");
         preset.IsArchived = true; preset.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
     }

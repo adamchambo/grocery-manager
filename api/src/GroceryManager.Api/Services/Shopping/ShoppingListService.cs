@@ -1,4 +1,5 @@
 using GroceryManager.Api.Common.Dtos;
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.Shopping;
 using GroceryManager.Api.Entities.InventoryHistory;
 using GroceryManager.Api.Entities.Pantry;
@@ -47,7 +48,7 @@ public sealed class ShoppingListService(
         if (stocktake is not null && preset is not null && stocktake.ShoppingPresetId != preset.Id)
             throw new ArgumentException("The stocktake was not performed for this preset.");
         if (stocktake is not null && await db.ShoppingLists.AnyAsync(x => x.SourceStocktakeId == stocktake.Id, cancellationToken))
-            throw new InvalidOperationException("This stocktake has already generated a shopping list.");
+            throw new ConflictException("This stocktake has already generated a shopping list.");
 
         var pantryItems = await GetPresetItemsAsync(pantryId, preset?.Id, cancellationToken);
         var categories = await db.Categories.AsNoTracking().Where(x => x.PantryId == pantryId).ToDictionaryAsync(x => x.Id, cancellationToken);
@@ -120,7 +121,7 @@ public sealed class ShoppingListService(
         if (request.SuggestedPurchaseQuantity < 0 || request.ActualPurchaseQuantity < 0)
             throw new ArgumentOutOfRangeException(nameof(request), "Purchase quantities cannot be negative.");
         if (item.InventoryAppliedAtUtc is not null && request.Outcome != item.Outcome)
-            throw new InvalidOperationException("Undo the applied purchase before changing its outcome.");
+            throw new ConflictException("Undo the applied purchase before changing its outcome.");
         if (request.DestinationLocationId is not null && !await db.StorageLocations.AnyAsync(x => x.Id == request.DestinationLocationId && x.PantryId == list.PantryId && !x.IsArchived, cancellationToken))
             throw new ArgumentException("The destination location is invalid.");
 
@@ -140,7 +141,7 @@ public sealed class ShoppingListService(
         EnsureActive(list);
         var item = await db.ShoppingListItems.SingleOrDefaultAsync(x => x.Id == itemId && x.ShoppingListId == list.Id, cancellationToken)
             ?? throw new KeyNotFoundException("Shopping list item not found.");
-        if (item.InventoryAppliedAtUtc is not null) throw new InvalidOperationException("An item with applied inventory cannot be removed.");
+        if (item.InventoryAppliedAtUtc is not null) throw new ConflictException("An item with applied inventory cannot be removed.");
         db.ShoppingListItems.Remove(item);
         await db.SaveChangesAsync(cancellationToken);
     }
@@ -175,7 +176,7 @@ public sealed class ShoppingListService(
         var list = await FindAsync(listId, cancellationToken);
         EnsureActive(list);
         if (await db.ShoppingListItems.AnyAsync(x => x.ShoppingListId == list.Id && x.Outcome == ShoppingListItemOutcome.Pending, cancellationToken))
-            throw new InvalidOperationException("Every shopping-list item requires an outcome before completion.");
+            throw new ConflictException("Every shopping-list item requires an outcome before completion.");
         list.Status = ShoppingListStatus.Completed; list.CompletedAtUtc = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         return await MapAsync(list, cancellationToken);
@@ -184,7 +185,7 @@ public sealed class ShoppingListService(
     public async Task<ShoppingListResponse> UndoAsync(Guid listId, CancellationToken cancellationToken)
     {
         var list = await FindAsync(listId, cancellationToken);
-        if (list.Status != ShoppingListStatus.Completed) throw new InvalidOperationException("Only a completed shopping list can be undone.");
+        if (list.Status != ShoppingListStatus.Completed) throw new ConflictException("Only a completed shopping list can be undone.");
         var items = await db.ShoppingListItems.Where(x => x.ShoppingListId == list.Id && x.InventoryAppliedAtUtc != null).ToListAsync(cancellationToken);
         var itemIds = items.Select(x => x.Id).ToArray();
         var adjustments = await db.InventoryAdjustments.Where(x => x.SourceShoppingListItemId != null && itemIds.Contains(x.SourceShoppingListItemId.Value)).ToListAsync(cancellationToken);
@@ -195,7 +196,7 @@ public sealed class ShoppingListService(
         {
             if (await db.InventoryAdjustments.AnyAsync(x => x.ReversesAdjustmentId == adjustment.Id, cancellationToken)) continue;
             var location = locations[adjustment.PantryItemLocationId];
-            if (location.CurrentQuantity - adjustment.QuantityDelta < 0) throw new InvalidOperationException("Undo would make inventory negative.");
+            if (location.CurrentQuantity - adjustment.QuantityDelta < 0) throw new ConflictException("Undo would make inventory negative.");
             location.CurrentQuantity -= adjustment.QuantityDelta; location.UpdatedAtUtc = now;
             db.InventoryAdjustments.Add(new InventoryAdjustment
             {
@@ -214,11 +215,11 @@ public sealed class ShoppingListService(
     {
         if (item.PantryItemId is null) return;
         var quantity = item.ActualPurchaseQuantity ?? item.SuggestedPurchaseQuantity ?? 0;
-        if (quantity <= 0) throw new InvalidOperationException("A purchased item requires a positive actual quantity.");
+        if (quantity <= 0) throw new ArgumentException("A purchased item requires a positive actual quantity.");
         var location = item.DestinationLocationId is Guid locationId
             ? await db.PantryItemLocations.SingleOrDefaultAsync(x => x.PantryItemId == item.PantryItemId && x.StorageLocationId == locationId, cancellationToken)
             : null;
-        if (location is null) throw new InvalidOperationException("A tracked purchase requires a valid destination location assigned to the pantry item.");
+        if (location is null) throw new ConflictException("A tracked purchase requires a valid destination location assigned to the pantry item.");
         var now = DateTimeOffset.UtcNow;
         location.CurrentQuantity += quantity; location.UpdatedAtUtc = now;
         item.ActualPurchaseQuantity = quantity; item.InventoryAppliedAtUtc = now;
@@ -263,7 +264,7 @@ public sealed class ShoppingListService(
 
     private static void EnsureActive(ShoppingList list)
     {
-        if (list.Status != ShoppingListStatus.Active) throw new InvalidOperationException("The shopping list is not active.");
+        if (list.Status != ShoppingListStatus.Active) throw new ConflictException("The shopping list is not active.");
     }
 
     private async Task<IReadOnlyList<ShoppingListResponse>> MapManyAsync(IReadOnlyList<ShoppingList> lists, CancellationToken cancellationToken)

@@ -1,3 +1,4 @@
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.Pantry;
 using GroceryManager.Api.Entities.Pantry;
 using GroceryManager.Api.Persistence;
@@ -47,7 +48,7 @@ public sealed class CategoryService(
     {
         var category = await FindAsync(categoryId, cancellationToken);
         if (await db.PantryItems.AnyAsync(x => x.CategoryId == categoryId && !x.IsArchived, cancellationToken))
-            throw new InvalidOperationException("A category containing active pantry items cannot be archived.");
+            throw new ConflictException("A category containing active pantry items cannot be archived.");
         category.IsArchived = true;
         category.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);

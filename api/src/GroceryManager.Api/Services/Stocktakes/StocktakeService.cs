@@ -1,4 +1,5 @@
 using GroceryManager.Api.Common.Dtos;
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.Stocktakes;
 using GroceryManager.Api.Entities.InventoryHistory;
 using GroceryManager.Api.Entities.Pantry;
@@ -117,7 +118,7 @@ public sealed class StocktakeService(
         EnsureInProgress(stocktake);
         var entries = await db.StocktakeEntries.Where(x => x.StocktakeId == stocktake.Id).ToListAsync(cancellationToken);
         if (entries.Any(x => x.Status == StocktakeEntryStatus.Pending))
-            throw new InvalidOperationException("Every stocktake entry must be confirmed, corrected, zero, or skipped.");
+            throw new ConflictException("Every stocktake entry must be confirmed, corrected, zero, or skipped.");
         var locationIds = entries.Select(x => x.PantryItemLocationId).ToArray();
         var locations = await db.PantryItemLocations.Where(x => locationIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
         var now = DateTimeOffset.UtcNow;
@@ -174,7 +175,7 @@ public sealed class StocktakeService(
 
     private static void EnsureInProgress(Stocktake stocktake)
     {
-        if (stocktake.Status != StocktakeStatus.InProgress) throw new InvalidOperationException("The stocktake is no longer in progress.");
+        if (stocktake.Status != StocktakeStatus.InProgress) throw new ConflictException("The stocktake is no longer in progress.");
     }
 
     private async Task<IReadOnlyList<StocktakeResponse>> MapManyAsync(IReadOnlyList<Stocktake> stocktakes, CancellationToken cancellationToken)

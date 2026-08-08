@@ -1,3 +1,4 @@
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Persistence;
 using GroceryManager.Api.Entities.Identity;
 using GroceryManager.Api.Services.Documents;
@@ -22,6 +23,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddProblemDetails();
+        services.AddExceptionHandler<ApiExceptionHandler>();
         services.AddControllers();
         services.AddOpenApi();
         services.AddHealthChecks();

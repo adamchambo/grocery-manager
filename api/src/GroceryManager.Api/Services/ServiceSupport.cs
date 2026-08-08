@@ -20,7 +20,7 @@ internal static class ServiceSupport
             .Select(x => x.Id)
             .SingleOrDefaultAsync(cancellationToken) is var pantryId && pantryId != Guid.Empty
                 ? pantryId
-                : throw new InvalidOperationException("The current user does not have a pantry.");
+                : throw new KeyNotFoundException("The current user does not have a pantry.");
     }
 
     public static string EncodeVersion(byte[] version) => Convert.ToBase64String(version);

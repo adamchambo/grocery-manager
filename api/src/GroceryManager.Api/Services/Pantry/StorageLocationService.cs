@@ -1,3 +1,4 @@
+using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.Pantry;
 using GroceryManager.Api.Entities.Pantry;
 using GroceryManager.Api.Persistence;
@@ -47,7 +48,7 @@ public sealed class StorageLocationService(
     {
         var location = await FindAsync(locationId, cancellationToken);
         if (await db.PantryItemLocations.AnyAsync(x => x.StorageLocationId == locationId && x.CurrentQuantity > 0, cancellationToken))
-            throw new InvalidOperationException("A location containing stock cannot be archived.");
+            throw new ConflictException("A location containing stock cannot be archived.");
         location.IsArchived = true;
         location.UpdatedAtUtc = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
