@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using GroceryManager.Api.Common.Dtos;
 using GroceryManager.Api.Dtos.InventoryHistory;
 using GroceryManager.Api.Services.InventoryHistory;
@@ -14,8 +15,8 @@ public sealed class InventoryAdjustmentsController(IInventoryAdjustmentService i
 {
     [HttpGet]
     public async Task<ActionResult<PagedResponse<InventoryAdjustmentResponse>>> List(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 25,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1,
+        [FromQuery, Range(1, 100)] int pageSize = 25,
         CancellationToken cancellationToken = default) =>
         Ok(await inventoryAdjustmentService.ListAsync(page, pageSize, cancellationToken));
 

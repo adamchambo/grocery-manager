@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using GroceryManager.Api.Common.Dtos;
 using GroceryManager.Api.Dtos.Shopping;
 using GroceryManager.Api.Enums.Shopping;
@@ -17,8 +18,8 @@ public sealed class ShoppingListsController(
 {
     [HttpGet]
     public async Task<ActionResult<PagedResponse<ShoppingListResponse>>> List(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 25,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1,
+        [FromQuery, Range(1, 100)] int pageSize = 25,
         [FromQuery] ShoppingListStatus? status = null,
         CancellationToken cancellationToken = default) =>
         Ok(await shoppingListService.ListAsync(page, pageSize, status, cancellationToken));

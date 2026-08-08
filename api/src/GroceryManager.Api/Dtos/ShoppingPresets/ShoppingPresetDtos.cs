@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using GroceryManager.Api.Enums.ShoppingPresets;
 
 namespace GroceryManager.Api.Dtos.ShoppingPresets;
@@ -5,17 +6,17 @@ namespace GroceryManager.Api.Dtos.ShoppingPresets;
 public sealed record ShoppingPresetItemRuleRequest(Guid PantryItemId, PresetItemRuleType RuleType);
 
 public sealed record CreateShoppingPresetRequest(
-    string Name,
-    decimal CoverageDays,
-    IReadOnlyList<Guid> CategoryIds,
-    IReadOnlyList<ShoppingPresetItemRuleRequest> ItemRules);
+    [property: Required, StringLength(120)] string Name,
+    [property: Range(typeof(decimal), "0.001", "999999999999999.999")] decimal CoverageDays,
+    [property: Required] IReadOnlyList<Guid> CategoryIds,
+    [property: Required] IReadOnlyList<ShoppingPresetItemRuleRequest> ItemRules);
 
 public sealed record UpdateShoppingPresetRequest(
-    string Name,
-    decimal CoverageDays,
-    IReadOnlyList<Guid> CategoryIds,
-    IReadOnlyList<ShoppingPresetItemRuleRequest> ItemRules,
-    string Version);
+    [property: Required, StringLength(120)] string Name,
+    [property: Range(typeof(decimal), "0.001", "999999999999999.999")] decimal CoverageDays,
+    [property: Required] IReadOnlyList<Guid> CategoryIds,
+    [property: Required] IReadOnlyList<ShoppingPresetItemRuleRequest> ItemRules,
+    [property: Required] string Version);
 
 public sealed record ShoppingPresetResponse(
     Guid Id,

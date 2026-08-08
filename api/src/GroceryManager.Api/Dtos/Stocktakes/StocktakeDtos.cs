@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using GroceryManager.Api.Enums.Pantry;
 using GroceryManager.Api.Enums.Stocktakes;
 
@@ -7,15 +8,15 @@ public sealed record StartStocktakeRequest(Guid? ShoppingPresetId);
 
 public sealed record UpdateStocktakeEntryRequest(
     StocktakeEntryStatus Status,
-    decimal? RecordedQuantity,
-    string Version);
+    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal? RecordedQuantity,
+    [property: Required] string Version);
 
 public sealed record AddDiscoveredStocktakeItemRequest(
-    string Name,
+    [property: Required, StringLength(160)] string Name,
     Guid CategoryId,
     Guid StorageLocationId,
     TrackingUnit TrackingUnit,
-    decimal RecordedQuantity);
+    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal RecordedQuantity);
 
 public sealed record StocktakeEntryResponse(
     Guid Id,

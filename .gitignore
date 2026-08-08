@@ -11,3 +11,4 @@
 /.env.*
 !/.env.example
 /pnpm-debug.log*
+/BACKEND_CHECKLIST.md

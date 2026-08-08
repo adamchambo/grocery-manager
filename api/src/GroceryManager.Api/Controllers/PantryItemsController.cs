@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using GroceryManager.Api.Common.Dtos;
 using GroceryManager.Api.Dtos.Pantry;
 using GroceryManager.Api.Services.Pantry;
@@ -13,9 +14,9 @@ public sealed class PantryItemsController(IPantryItemService pantryItemService) 
 {
     [HttpGet]
     public async Task<ActionResult<PagedResponse<PantryItemResponse>>> List(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 25,
-        [FromQuery] string? search = null,
+        [FromQuery, Range(1, int.MaxValue)] int page = 1,
+        [FromQuery, Range(1, 100)] int pageSize = 25,
+        [FromQuery, StringLength(160)] string? search = null,
         CancellationToken cancellationToken = default) =>
         Ok(await pantryItemService.ListAsync(page, pageSize, search, cancellationToken));
 

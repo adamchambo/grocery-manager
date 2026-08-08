@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using GroceryManager.Api.Enums.Shopping;
 
 namespace GroceryManager.Api.Dtos.Shopping;
@@ -5,21 +6,23 @@ namespace GroceryManager.Api.Dtos.Shopping;
 public sealed record GenerateShoppingListRequest(
     Guid? ShoppingPresetId,
     Guid? StocktakeId,
-    string? Name);
+    [property: StringLength(160)] string? Name);
 
-public sealed record UpdateShoppingListRequest(string Name, string Version);
+public sealed record UpdateShoppingListRequest(
+    [property: Required, StringLength(160)] string Name,
+    [property: Required] string Version);
 
 public sealed record AddShoppingListItemRequest(
-    string Name,
-    decimal SuggestedPurchaseQuantity,
+    [property: Required, StringLength(160)] string Name,
+    [property: Range(typeof(decimal), "0.001", "999999999999999.999")] decimal SuggestedPurchaseQuantity,
     Guid? DestinationLocationId);
 
 public sealed record UpdateShoppingListItemRequest(
-    decimal? SuggestedPurchaseQuantity,
-    decimal? ActualPurchaseQuantity,
+    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal? SuggestedPurchaseQuantity,
+    [property: Range(typeof(decimal), "0", "999999999999999.999")] decimal? ActualPurchaseQuantity,
     ShoppingListItemOutcome Outcome,
     Guid? DestinationLocationId,
-    string Version);
+    [property: Required] string Version);
 
 public sealed record ShoppingListItemResponse(
     Guid Id,
