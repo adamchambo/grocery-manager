@@ -1,9 +1,19 @@
+using GroceryManager.Api.Persistence;
 using Scalar.AspNetCore;
 
 namespace GroceryManager.Api.Extensions;
 
 public static class WebApplicationExtensions
 {
+    public static async Task SeedDefaultDataAsync(
+        this WebApplication app,
+        CancellationToken cancellationToken = default)
+    {
+        await using var scope = app.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<GroceryManagerDbContext>();
+        await DefaultDataSeeder.SeedGlobalDataAsync(db, cancellationToken);
+    }
+
     public static WebApplication UseWebApplicationMiddleware(this WebApplication app)
     {
         app.UseForwardedHeaders();

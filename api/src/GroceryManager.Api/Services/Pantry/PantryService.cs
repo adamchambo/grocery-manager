@@ -25,6 +25,7 @@ public sealed class PantryService(
             CreatedAtUtc = now, UpdatedAtUtc = now
         };
         db.Pantries.Add(pantry);
+        DefaultDataSeeder.AddPantryDefaults(db, pantry.Id, now);
         await db.SaveChangesAsync(cancellationToken);
         return ToResponse(pantry);
     }
