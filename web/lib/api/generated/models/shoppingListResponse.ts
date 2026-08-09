@@ -10,13 +10,9 @@ import type { ShoppingListStatus } from './shoppingListStatus';
 export interface ShoppingListResponse {
   id: string;
   /** @nullable */
-  sourcePresetId: string | null;
-  /** @nullable */
   sourceStocktakeId: string | null;
   name: string;
   status: ShoppingListStatus;
-  usesCustomOrder: boolean;
-  stockChangedSinceGeneration: boolean;
   generatedAtUtc: string;
   /** @nullable */
   completedAtUtc: string | null;

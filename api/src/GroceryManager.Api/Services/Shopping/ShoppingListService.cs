@@ -39,20 +39,14 @@ public sealed class ShoppingListService(
         var pantryId = await ServiceSupport.RequirePantryIdAsync(db, currentUser, cancellationToken);
         var routineIntervalDays = await db.Pantries.Where(x => x.Id == pantryId)
             .Select(x => x.ShoppingIntervalDays).SingleAsync(cancellationToken);
-        var preset = request.ShoppingPresetId is Guid presetId
-            ? await db.ShoppingPresets.SingleOrDefaultAsync(x => x.Id == presetId && x.PantryId == pantryId && !x.IsArchived, cancellationToken)
-                ?? throw new ArgumentException("The shopping preset is invalid.")
-            : null;
         var stocktake = request.StocktakeId is Guid stocktakeId
             ? await db.Stocktakes.SingleOrDefaultAsync(x => x.Id == stocktakeId && x.PantryId == pantryId && x.Status == StocktakeStatus.Completed, cancellationToken)
                 ?? throw new ArgumentException("The stocktake must exist and be completed.")
             : null;
-        if (stocktake is not null && preset is not null && stocktake.ShoppingPresetId != preset.Id)
-            throw new ArgumentException("The stocktake was not performed for this preset.");
         if (stocktake is not null && await db.ShoppingLists.AnyAsync(x => x.SourceStocktakeId == stocktake.Id, cancellationToken))
             throw new ConflictException("This stocktake has already generated a shopping list.");
 
-        var pantryItems = await GetPresetItemsAsync(pantryId, preset?.Id, cancellationToken);
+        var pantryItems = await GetRegularItemsAsync(pantryId, cancellationToken);
         var categories = await db.Categories.AsNoTracking().Where(x => x.PantryId == pantryId).ToDictionaryAsync(x => x.Id, cancellationToken);
         var itemIds = pantryItems.Select(x => x.Id).ToArray();
         var locations = await db.PantryItemLocations.AsNoTracking().Where(x => itemIds.Contains(x.PantryItemId)).ToListAsync(cancellationToken);
@@ -63,7 +57,7 @@ public sealed class ShoppingListService(
         var now = DateTimeOffset.UtcNow;
         var list = new ShoppingList
         {
-            Id = Guid.NewGuid(), PantryId = pantryId, SourcePresetId = preset?.Id, SourceStocktakeId = stocktake?.Id,
+            Id = Guid.NewGuid(), PantryId = pantryId, SourcePresetId = null, SourceStocktakeId = stocktake?.Id,
             Name = string.IsNullOrWhiteSpace(request.Name) ? $"Shopping list {now:d MMM yyyy}" : request.Name.Trim(),
             Status = ShoppingListStatus.Active, GeneratedAtUtc = now
         };
@@ -104,23 +98,11 @@ public sealed class ShoppingListService(
         var list = await FindAsync(listId, cancellationToken);
         EnsureActive(list);
         if (request.SuggestedPurchaseQuantity <= 0) throw new ArgumentOutOfRangeException(nameof(request));
-        if (request.DestinationLocationId is not null && !await db.StorageLocations.AnyAsync(x => x.Id == request.DestinationLocationId && x.PantryId == list.PantryId && !x.IsArchived, cancellationToken))
-            throw new ArgumentException("The destination location is invalid.");
-        Category? category = null;
-        if (request.CreatePantryItemOnPurchase)
-        {
-            if (request.PantryCategoryId is null || request.PantryTrackingUnit is null || request.DestinationLocationId is null)
-                throw new ArgumentException("Tracked manual items require a category, tracking unit, and destination location.");
-            category = await db.Categories.SingleOrDefaultAsync(x => x.Id == request.PantryCategoryId && x.PantryId == list.PantryId && !x.IsArchived, cancellationToken)
-                ?? throw new ArgumentException("The pantry category is invalid.");
-        }
         var sortOrder = await db.ShoppingListItems.Where(x => x.ShoppingListId == list.Id).Select(x => (int?)x.SortOrder).MaxAsync(cancellationToken) ?? -1;
         var item = new ShoppingListItem
         {
             Id = Guid.NewGuid(), ShoppingListId = list.Id, ItemNameSnapshot = request.Name.Trim(),
-            SuggestedPurchaseQuantity = request.SuggestedPurchaseQuantity, DestinationLocationId = request.DestinationLocationId,
-            PantryCategoryId = category?.Id, CategoryNameSnapshot = category?.Name, PantryTrackingUnit = request.PantryTrackingUnit,
-            TrackingUnitSnapshot = request.PantryTrackingUnit?.ToString(), CreatePantryItemOnPurchase = request.CreatePantryItemOnPurchase,
+            SuggestedPurchaseQuantity = request.SuggestedPurchaseQuantity,
             Outcome = ShoppingListItemOutcome.Pending, IsManual = true, SortOrder = sortOrder + 1
         };
         db.ShoppingListItems.Add(item);
@@ -135,19 +117,11 @@ public sealed class ShoppingListService(
         var item = await db.ShoppingListItems.SingleOrDefaultAsync(x => x.Id == itemId && x.ShoppingListId == list.Id, cancellationToken)
             ?? throw new KeyNotFoundException("Shopping list item not found.");
         ServiceSupport.ApplyVersion(db, item, request.Version);
-        if (request.SuggestedPurchaseQuantity < 0 || request.ActualPurchaseQuantity < 0)
+        if (request.SuggestedPurchaseQuantity < 0)
             throw new ArgumentOutOfRangeException(nameof(request), "Purchase quantities cannot be negative.");
-        if (item.InventoryAppliedAtUtc is not null && request.Outcome != item.Outcome)
-            throw new ConflictException("Undo the applied purchase before changing its outcome.");
-        if (request.DestinationLocationId is not null && !await db.StorageLocations.AnyAsync(x => x.Id == request.DestinationLocationId && x.PantryId == list.PantryId && !x.IsArchived, cancellationToken))
-            throw new ArgumentException("The destination location is invalid.");
 
         item.SuggestedPurchaseQuantity = request.SuggestedPurchaseQuantity ?? item.SuggestedPurchaseQuantity;
-        item.ActualPurchaseQuantity = request.Outcome == ShoppingListItemOutcome.NotPurchased ? 0 : request.ActualPurchaseQuantity;
-        item.DestinationLocationId = request.DestinationLocationId ?? item.DestinationLocationId;
         item.Outcome = request.Outcome;
-        if (request.Outcome is ShoppingListItemOutcome.Purchased or ShoppingListItemOutcome.PartiallyPurchased && item.InventoryAppliedAtUtc is null)
-            await ApplyPurchaseAsync(list, item, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         return (await MapAsync(list, cancellationToken)).Items.Single(x => x.Id == item.Id);
     }
@@ -170,7 +144,6 @@ public sealed class ShoppingListService(
         EnsureActive(list);
         var item = await db.ShoppingListItems.SingleOrDefaultAsync(x => x.Id == itemId && x.ShoppingListId == list.Id, cancellationToken)
             ?? throw new KeyNotFoundException("Shopping list item not found.");
-        if (item.InventoryAppliedAtUtc is not null) throw new ConflictException("An item with applied inventory cannot be removed.");
         db.ShoppingListItems.Remove(item);
         await db.SaveChangesAsync(cancellationToken);
     }
@@ -320,16 +293,10 @@ public sealed class ShoppingListService(
         return location;
     }
 
-    private async Task<List<PantryItem>> GetPresetItemsAsync(Guid pantryId, Guid? presetId, CancellationToken cancellationToken)
+    private async Task<List<PantryItem>> GetRegularItemsAsync(Guid pantryId, CancellationToken cancellationToken)
     {
         var query = db.PantryItems.Where(x => x.PantryId == pantryId && !x.IsArchived);
-        if (presetId is null) return await query.OrderBy(x => x.Name).ToListAsync(cancellationToken);
-        var preset = await db.ShoppingPresets.SingleAsync(x => x.Id == presetId, cancellationToken);
-        if (preset.IsEverythingPreset) return await query.OrderBy(x => x.Name).ToListAsync(cancellationToken);
-        var categories = db.PresetCategories.Where(x => x.ShoppingPresetId == presetId).Select(x => x.CategoryId);
-        var includes = db.PresetItemRules.Where(x => x.ShoppingPresetId == presetId && x.RuleType == PresetItemRuleType.Include).Select(x => x.PantryItemId);
-        var excludes = db.PresetItemRules.Where(x => x.ShoppingPresetId == presetId && x.RuleType == PresetItemRuleType.Exclude).Select(x => x.PantryItemId);
-        return await query.Where(x => (categories.Contains(x.CategoryId) || includes.Contains(x.Id)) && !excludes.Contains(x.Id)).OrderBy(x => x.Name).ToListAsync(cancellationToken);
+        return await query.OrderBy(x => x.Name).ToListAsync(cancellationToken);
     }
 
     private async Task<ShoppingList> FindAsync(Guid id, CancellationToken cancellationToken)
@@ -355,30 +322,16 @@ public sealed class ShoppingListService(
     {
         var ids = lists.Select(x => x.Id).ToArray();
         var items = await db.ShoppingListItems.AsNoTracking().Where(x => ids.Contains(x.ShoppingListId)).OrderBy(x => x.SortOrder).ToListAsync(cancellationToken);
-        var pantryId = lists.FirstOrDefault()?.PantryId;
-        HashSet<Guid> duplicateItemIds = [];
-        if (pantryId is Guid value)
-        {
-            var activeItems = await (from item in db.ShoppingListItems.AsNoTracking()
-                                     join list in db.ShoppingLists.AsNoTracking() on item.ShoppingListId equals list.Id
-                                     where list.PantryId == value && list.Status == ShoppingListStatus.Active && item.PantryItemId != null
-                                     select new { item.PantryItemId, item.ShoppingListId }).ToListAsync(cancellationToken);
-            duplicateItemIds = activeItems.GroupBy(x => x.PantryItemId!.Value)
-                .Where(x => x.Select(y => y.ShoppingListId).Distinct().Count() > 1)
-                .Select(x => x.Key).ToHashSet();
-        }
-        return lists.Select(x => new ShoppingListResponse(x.Id, x.SourcePresetId, x.SourceStocktakeId, x.Name, x.Status, x.UsesCustomOrder,
-            x.StockChangedSinceGeneration, x.GeneratedAtUtc, x.CompletedAtUtc,
-            items.Where(y => y.ShoppingListId == x.Id).Select(y => ToResponse(y,
-                y.PantryItemId is Guid pantryItemId && duplicateItemIds.Contains(pantryItemId))).ToList(), ServiceSupport.EncodeVersion(x.Version))).ToList();
+        return lists.Select(x => new ShoppingListResponse(x.Id, x.SourceStocktakeId, x.Name, x.Status, x.GeneratedAtUtc, x.CompletedAtUtc,
+            items.Where(y => y.ShoppingListId == x.Id).Select(ToResponse).ToList(), ServiceSupport.EncodeVersion(x.Version))).ToList();
     }
 
     private async Task<ShoppingListResponse> MapAsync(ShoppingList list, CancellationToken cancellationToken) =>
         (await MapManyAsync([list], cancellationToken))[0];
 
-    private static ShoppingListItemResponse ToResponse(ShoppingListItem x, bool isOnAnotherActiveList) =>
-        new(x.Id, x.PantryItemId, x.PantryCategoryId, x.DestinationLocationId, x.ItemNameSnapshot, x.BrandSnapshot, x.CategoryNameSnapshot,
+    private static ShoppingListItemResponse ToResponse(ShoppingListItem x) =>
+        new(x.Id, x.PantryItemId, x.ItemNameSnapshot, x.CategoryNameSnapshot,
             x.TrackingUnitSnapshot, x.PackageSizeSnapshot, x.PackageUnitSnapshot, x.StockAtGeneration,
-            x.RequiredAtGeneration, x.SuggestedPurchaseQuantity, x.ActualPurchaseQuantity, x.Outcome, x.IsManual, x.CreatePantryItemOnPurchase, isOnAnotherActiveList,
-            x.SortOrder, x.InventoryAppliedAtUtc, ServiceSupport.EncodeVersion(x.Version));
+            x.RequiredAtGeneration, x.SuggestedPurchaseQuantity, x.Outcome, x.IsManual,
+            x.SortOrder, ServiceSupport.EncodeVersion(x.Version));
 }

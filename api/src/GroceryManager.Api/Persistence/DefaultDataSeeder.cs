@@ -1,5 +1,4 @@
 using GroceryManager.Api.Entities.Pantry;
-using GroceryManager.Api.Entities.ShoppingPresets;
 using GroceryManager.Api.Enums.Pantry;
 using Microsoft.EntityFrameworkCore;
 
@@ -107,16 +106,5 @@ public static class DefaultDataSeeder
             CreatedAtUtc = createdAtUtc,
             UpdatedAtUtc = createdAtUtc
         }));
-
-        db.ShoppingPresets.Add(new ShoppingPreset
-        {
-            Id = Guid.NewGuid(),
-            PantryId = pantryId,
-            Name = "Everything",
-            CoverageDays = 7,
-            IsEverythingPreset = true,
-            CreatedAtUtc = createdAtUtc,
-            UpdatedAtUtc = createdAtUtc
-        });
     }
 }

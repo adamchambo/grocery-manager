@@ -10,13 +10,7 @@ export interface ShoppingListItemResponse {
   id: string;
   /** @nullable */
   pantryItemId: string | null;
-  /** @nullable */
-  pantryCategoryId: string | null;
-  /** @nullable */
-  destinationLocationId: string | null;
   itemName: string;
-  /** @nullable */
-  brand: string | null;
   /** @nullable */
   categoryName: string | null;
   /** @nullable */
@@ -43,18 +37,9 @@ export interface ShoppingListItemResponse {
      * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
      */
   suggestedPurchaseQuantity: number | string | null;
-  /**
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
-     */
-  actualPurchaseQuantity: number | string | null;
   outcome: ShoppingListItemOutcome;
   isManual: boolean;
-  createPantryItemOnPurchase: boolean;
-  isOnAnotherActiveList: boolean;
   /** @pattern ^-?(?:0|[1-9]\d*)$ */
   sortOrder: number | string;
-  /** @nullable */
-  inventoryAppliedAtUtc: string | null;
   version: string;
 }

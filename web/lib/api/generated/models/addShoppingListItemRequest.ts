@@ -4,8 +4,6 @@
  * GroceryManager.Api | v1
  * OpenAPI spec version: 1.0.0
  */
-import type { TrackingUnit } from './trackingUnit';
-
 export interface AddShoppingListItemRequest {
   /**
      * @minLength 0
@@ -18,11 +16,4 @@ export interface AddShoppingListItemRequest {
      * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
      */
   suggestedPurchaseQuantity: number | string;
-  createPantryItemOnPurchase: boolean;
-  /** @nullable */
-  pantryCategoryId: string | null;
-  /** @nullable */
-  pantryTrackingUnit: TrackingUnit | null;
-  /** @nullable */
-  destinationLocationId: string | null;
 }

@@ -14,15 +14,6 @@ export interface UpdateShoppingListItemRequest {
      * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
      */
   suggestedPurchaseQuantity: number | string | null;
-  /**
-     * @minimum 0
-     * @maximum 1000000000000000
-     * @nullable
-     * @pattern ^-?(?:0|[1-9]\d*)(?:\.\d+)?$
-     */
-  actualPurchaseQuantity: number | string | null;
   outcome: ShoppingListItemOutcome;
-  /** @nullable */
-  destinationLocationId: string | null;
   version: string;
 }

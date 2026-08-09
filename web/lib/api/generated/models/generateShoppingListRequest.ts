@@ -7,8 +7,6 @@
 
 export interface GenerateShoppingListRequest {
   /** @nullable */
-  shoppingPresetId: string | null;
-  /** @nullable */
   stocktakeId: string | null;
   /**
      * @minLength 0

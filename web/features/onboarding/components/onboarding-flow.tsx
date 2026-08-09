@@ -226,7 +226,7 @@ export function OnboardingFlow() {
 
       {step === 0 && (
         <Card>
-          <CardHeader><CardTitle>Name your pantry</CardTitle><CardDescription>We’ll add editable starter categories, storage locations, and an Everything preset.</CardDescription></CardHeader>
+          <CardHeader><CardTitle>Name your pantry</CardTitle><CardDescription>We’ll add starter categories and stock areas for your first stocktake.</CardDescription></CardHeader>
           <CardContent>
             <form className="space-y-6" onSubmit={createPantry}>
               <Field><FieldLabel htmlFor="pantry-name">Pantry name</FieldLabel><Input id="pantry-name" name="pantryName" defaultValue="My Pantry" maxLength={120} disabled={isSubmitting} required /></Field>
@@ -325,7 +325,7 @@ export function OnboardingFlow() {
       )}
 
       {step === 3 && (
-        <Card className="text-center"><CardHeader><CardTitle>Your pantry is ready</CardTitle><CardDescription>Your defaults, selected items, and Everything preset are ready to use.</CardDescription></CardHeader><CardContent><Button onClick={() => router.replace("/app")}>Continue to dashboard</Button></CardContent></Card>
+        <Card className="text-center"><CardHeader><CardTitle>Your pantry is ready</CardTitle><CardDescription>Your starter items and stock areas are ready for a quick stocktake.</CardDescription></CardHeader><CardContent><Button onClick={() => router.replace("/app")}>Continue to dashboard</Button></CardContent></Card>
       )}
     </div>
   )

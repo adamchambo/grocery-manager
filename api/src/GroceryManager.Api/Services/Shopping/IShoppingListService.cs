@@ -28,10 +28,6 @@ public interface IShoppingListService
         Guid itemId,
         UpdateShoppingListItemRequest request,
         CancellationToken cancellationToken);
-    public Task UpdateOrderAsync(Guid listId, UpdateShoppingListOrderRequest request, CancellationToken cancellationToken);
     public Task RemoveItemAsync(Guid listId, Guid itemId, CancellationToken cancellationToken);
-    public Task<ShoppingListItemResponse> UndoPurchaseAsync(Guid listId, Guid itemId, CancellationToken cancellationToken);
-    public Task<ShoppingListResponse> RecalculateAsync(Guid listId, CancellationToken cancellationToken);
     public Task<ShoppingListResponse> CompleteAsync(Guid listId, CancellationToken cancellationToken);
-    public Task<ShoppingListResponse> UndoAsync(Guid listId, CancellationToken cancellationToken);
 }

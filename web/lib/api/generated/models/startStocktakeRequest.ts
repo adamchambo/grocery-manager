@@ -5,7 +5,4 @@
  * OpenAPI spec version: 1.0.0
  */
 
-export interface StartStocktakeRequest {
-  /** @nullable */
-  shoppingPresetId: string | null;
-}
+export interface StartStocktakeRequest {}

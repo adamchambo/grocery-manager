@@ -230,7 +230,7 @@ public sealed class StocktakeService(
             .OrderBy(x => x.LocationSortOrderSnapshot).ThenBy(x => x.ItemSortOrderSnapshot).ToListAsync(cancellationToken);
         var storageLocationIds = await db.PantryItemLocations.AsNoTracking().Where(x => entries.Select(y => y.PantryItemLocationId).Contains(x.Id))
             .ToDictionaryAsync(x => x.Id, x => x.StorageLocationId, cancellationToken);
-        return stocktakes.Select(x => new StocktakeResponse(x.Id, x.ShoppingPresetId, x.Status, x.StartedAtUtc, x.CompletedAtUtc,
+        return stocktakes.Select(x => new StocktakeResponse(x.Id, x.Status, x.StartedAtUtc, x.CompletedAtUtc,
             entries.Where(y => y.StocktakeId == x.Id).Select(y => ToResponse(y, storageLocationIds[y.PantryItemLocationId])).ToList(), ServiceSupport.EncodeVersion(x.Version))).ToList();
     }
 

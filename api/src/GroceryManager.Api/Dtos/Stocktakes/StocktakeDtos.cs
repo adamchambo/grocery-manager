@@ -4,7 +4,12 @@ using GroceryManager.Api.Enums.Stocktakes;
 
 namespace GroceryManager.Api.Dtos.Stocktakes;
 
-public sealed record StartStocktakeRequest(Guid? ShoppingPresetId);
+public sealed record StartStocktakeRequest
+{
+    [Obsolete("Shopping presets are no longer used. Start a stocktake without a preset.")]
+    public StartStocktakeRequest(Guid? _) { }
+    public StartStocktakeRequest() { }
+}
 
 public sealed record UpdateStocktakeEntryRequest(
     StocktakeEntryStatus Status,
@@ -55,7 +60,6 @@ public sealed record StocktakeEntryResponse(
 
 public sealed record StocktakeResponse(
     Guid Id,
-    Guid? ShoppingPresetId,
     StocktakeStatus Status,
     DateTimeOffset StartedAtUtc,
     DateTimeOffset? CompletedAtUtc,

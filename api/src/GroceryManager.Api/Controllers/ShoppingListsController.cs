@@ -59,16 +59,6 @@ public sealed class ShoppingListsController(
         CancellationToken cancellationToken) =>
         Ok(await shoppingListService.UpdateItemAsync(listId, itemId, request, cancellationToken));
 
-    [HttpPut("{listId:guid}/order")]
-    public async Task<IActionResult> UpdateOrder(
-        Guid listId,
-        UpdateShoppingListOrderRequest request,
-        CancellationToken cancellationToken)
-    {
-        await shoppingListService.UpdateOrderAsync(listId, request, cancellationToken);
-        return NoContent();
-    }
-
     [HttpDelete("{listId:guid}/items/{itemId:guid}")]
     public async Task<IActionResult> RemoveItem(Guid listId, Guid itemId, CancellationToken cancellationToken)
     {
@@ -76,30 +66,11 @@ public sealed class ShoppingListsController(
         return NoContent();
     }
 
-    [HttpPost("{listId:guid}/items/{itemId:guid}/undo-purchase")]
-    public async Task<ActionResult<ShoppingListItemResponse>> UndoPurchase(
-        Guid listId,
-        Guid itemId,
-        CancellationToken cancellationToken) =>
-        Ok(await shoppingListService.UndoPurchaseAsync(listId, itemId, cancellationToken));
-
-    [HttpPost("{listId:guid}/recalculate")]
-    public async Task<ActionResult<ShoppingListResponse>> Recalculate(
-        Guid listId,
-        CancellationToken cancellationToken) =>
-        Ok(await shoppingListService.RecalculateAsync(listId, cancellationToken));
-
     [HttpPost("{listId:guid}/complete")]
     public async Task<ActionResult<ShoppingListResponse>> Complete(
         Guid listId,
         CancellationToken cancellationToken) =>
         Ok(await shoppingListService.CompleteAsync(listId, cancellationToken));
-
-    [HttpPost("{listId:guid}/undo")]
-    public async Task<ActionResult<ShoppingListResponse>> Undo(
-        Guid listId,
-        CancellationToken cancellationToken) =>
-        Ok(await shoppingListService.UndoAsync(listId, cancellationToken));
 
     [HttpGet("{listId:guid}/pdf")]
     public async Task<IActionResult> DownloadPdf(Guid listId, CancellationToken cancellationToken)

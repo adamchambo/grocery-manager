@@ -6,13 +6,10 @@ import { useState } from "react"
 import {
   BoxesIcon,
   ClipboardCheckIcon,
-  EllipsisIcon,
-  HistoryIcon,
   HouseIcon,
   ListChecksIcon,
   LogOutIcon,
   SettingsIcon,
-  SlidersHorizontalIcon,
   UserIcon,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -22,25 +19,12 @@ import { cn } from "@/lib/utilities/cn"
 import { Brand } from "@/shared/components/layout/brand"
 import { ThemeToggle } from "@/shared/components/layout/theme-toggle"
 import { Button } from "@/shared/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu"
 
 const primaryItems = [
   { href: "/app", label: "Dashboard", icon: HouseIcon, exact: true },
   { href: "/app/pantry", label: "Pantry", icon: BoxesIcon, exact: false },
   { href: "/app/stocktakes", label: "Stocktake", icon: ClipboardCheckIcon, exact: false },
   { href: "/app/shopping-lists", label: "Shopping lists", icon: ListChecksIcon, exact: false },
-] as const
-
-const moreItems = [
-  { href: "/app/presets", label: "Shopping presets", icon: SlidersHorizontalIcon },
-  { href: "/app/history", label: "Inventory history", icon: HistoryIcon },
 ] as const
 
 const settingsItem = { href: "/app/settings", label: "Settings", icon: SettingsIcon } as const
@@ -53,8 +37,6 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
   const pathname = usePathname()
   const router = useRouter()
   const [isSigningOut, setIsSigningOut] = useState(false)
-  const moreIsActive = moreItems.some((item) => isActive(pathname, item.href))
-    || isActive(pathname, settingsItem.href)
 
   async function signOut() {
     setIsSigningOut(true)
@@ -75,10 +57,6 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
         <nav aria-label="Primary navigation" className="mt-8 flex flex-1 flex-col gap-1">
           {primaryItems.map((item) => (
             <DesktopNavLink key={item.href} item={item} active={isActive(pathname, item.href, item.exact)} />
-          ))}
-          <p className="mb-1 mt-6 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">More</p>
-          {moreItems.map((item) => (
-            <DesktopNavLink key={item.href} item={item} active={isActive(pathname, item.href)} />
           ))}
         </nav>
         <div className="space-y-1 border-t pt-4">
@@ -104,40 +82,16 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
         <main className="mx-auto w-full max-w-7xl px-4 py-6 pb-24 sm:px-6 md:pb-8 lg:px-8">{children}</main>
       </div>
 
-      <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border/70 bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-border/70 bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {primaryItems.map((item) => (
           <MobileNavLink key={item.href} item={item} active={isActive(pathname, item.href, item.exact)} />
         ))}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className={cn("flex min-h-16 cursor-pointer flex-col items-center justify-center gap-1 text-[0.68rem] font-medium text-muted-foreground", moreIsActive && "text-primary")}>
-              <EllipsisIcon className="size-5" aria-hidden="true" />
-              More
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" side="top" className="w-56">
-            <DropdownMenuLabel>More</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {moreItems.map((item) => (
-              <DropdownMenuItem key={item.href} asChild>
-                <Link href={item.href}><item.icon aria-hidden="true" />{item.label}</Link>
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href={settingsItem.href}><SettingsIcon aria-hidden="true" />Settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => void signOut()} disabled={isSigningOut}>
-              <LogOutIcon aria-hidden="true" />{isSigningOut ? "Signing out…" : "Sign out"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </nav>
     </div>
   )
 }
 
-type NavigationItem = (typeof primaryItems)[number] | (typeof moreItems)[number] | typeof settingsItem
+type NavigationItem = (typeof primaryItems)[number] | typeof settingsItem
 
 function DesktopNavLink({ item, active }: Readonly<{ item: NavigationItem; active: boolean }>) {
   return (
