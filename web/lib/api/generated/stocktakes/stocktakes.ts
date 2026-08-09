@@ -9,6 +9,7 @@ import type {
   CompleteStocktakeRequest,
   GetApiStocktakesParams,
   PagedResponseOfStocktakeResponse,
+  SaveStocktakeLocationEntriesRequest,
   StartStocktakeRequest,
   StocktakeEntryResponse,
   StocktakeResponse,
@@ -41,6 +42,19 @@ export const getApiStocktakes = async (params?: GetApiStocktakesParams, options?
     method: 'GET'
 
 
+  }
+);}
+
+export const getPutApiStocktakesStocktakeIdLocationEntriesUrl = (stocktakeId: string,) => `/api/stocktakes/${stocktakeId}/location-entries`
+
+export const putApiStocktakesStocktakeIdLocationEntries = async (stocktakeId: string,
+    saveStocktakeLocationEntriesRequest: SaveStocktakeLocationEntriesRequest, options?: Parameters<typeof apiFetch>[1]): Promise<StocktakeEntryResponse[]> => {
+  return apiFetch<StocktakeEntryResponse[]>(getPutApiStocktakesStocktakeIdLocationEntriesUrl(stocktakeId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(saveStocktakeLocationEntriesRequest)
   }
 );}
 

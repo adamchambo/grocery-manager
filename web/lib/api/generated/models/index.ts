@@ -38,6 +38,8 @@ export * from './presetItemRuleType';
 export * from './registerAccountRequest';
 export * from './resetPasswordRequest';
 export * from './reverseInventoryAdjustmentRequest';
+export * from './saveStocktakeEntryRequest';
+export * from './saveStocktakeLocationEntriesRequest';
 export * from './shoppingListItemOutcome';
 export * from './shoppingListItemResponse';
 export * from './shoppingListResponse';

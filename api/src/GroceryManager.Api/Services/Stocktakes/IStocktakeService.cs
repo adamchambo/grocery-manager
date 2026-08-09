@@ -16,6 +16,10 @@ public interface IStocktakeService
         Guid entryId,
         UpdateStocktakeEntryRequest request,
         CancellationToken cancellationToken);
+    public Task<IReadOnlyList<StocktakeEntryResponse>> SaveLocationEntriesAsync(
+        Guid stocktakeId,
+        SaveStocktakeLocationEntriesRequest request,
+        CancellationToken cancellationToken);
     public Task<StocktakeEntryResponse> AddDiscoveredItemAsync(
         Guid stocktakeId,
         AddDiscoveredStocktakeItemRequest request,

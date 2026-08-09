@@ -98,6 +98,40 @@ public sealed class StocktakeService(
         return ToResponse(entry, storageLocationId);
     }
 
+    public async Task<IReadOnlyList<StocktakeEntryResponse>> SaveLocationEntriesAsync(
+        Guid stocktakeId,
+        SaveStocktakeLocationEntriesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var stocktake = await FindAsync(stocktakeId, cancellationToken);
+        EnsureInProgress(stocktake);
+        var rows = await (from entry in db.StocktakeEntries
+                          join itemLocation in db.PantryItemLocations on entry.PantryItemLocationId equals itemLocation.Id
+                          where entry.StocktakeId == stocktake.Id && itemLocation.StorageLocationId == request.StorageLocationId
+                          select new { Entry = entry, itemLocation.StorageLocationId }).ToListAsync(cancellationToken);
+        var entries = rows.ToDictionary(x => x.Entry.Id, x => x.Entry);
+        if (entries.Count != request.Entries.Count || entries.Count != request.Entries.Select(x => x.EntryId).Distinct().Count() || request.Entries.Any(x => !entries.ContainsKey(x.EntryId)))
+            throw new ArgumentException("The location count must include every item exactly once.");
+        if (request.Entries.Any(x => x.RecordedQuantity < 0)) throw new ArgumentOutOfRangeException(nameof(request));
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var requestEntry in request.Entries)
+        {
+            var entry = entries[requestEntry.EntryId];
+            ServiceSupport.ApplyVersion(db, entry, requestEntry.Version);
+            entry.RecordedQuantity = requestEntry.RecordedQuantity;
+            entry.Status = requestEntry.RecordedQuantity == 0
+                ? StocktakeEntryStatus.Zero
+                : requestEntry.RecordedQuantity == entry.EstimatedQuantity
+                    ? StocktakeEntryStatus.Confirmed
+                    : StocktakeEntryStatus.Corrected;
+            entry.ConfirmedAtUtc = now;
+            entry.IsOutlier = Math.Abs(requestEntry.RecordedQuantity - entry.EstimatedQuantity) > Math.Max(1m, entry.EstimatedQuantity * 0.5m);
+        }
+        await db.SaveChangesAsync(cancellationToken);
+        return rows.Select(x => ToResponse(x.Entry, x.StorageLocationId)).ToList();
+    }
+
     public async Task<StocktakeEntryResponse> AddDiscoveredItemAsync(Guid stocktakeId, AddDiscoveredStocktakeItemRequest request, CancellationToken cancellationToken)
     {
         var stocktake = await FindAsync(stocktakeId, cancellationToken);

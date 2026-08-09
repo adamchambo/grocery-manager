@@ -110,7 +110,7 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
         ))}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className={cn("flex min-h-16 flex-col items-center justify-center gap-1 text-[0.68rem] font-medium text-muted-foreground", moreIsActive && "text-primary")}>
+            <button className={cn("flex min-h-16 cursor-pointer flex-col items-center justify-center gap-1 text-[0.68rem] font-medium text-muted-foreground", moreIsActive && "text-primary")}>
               <EllipsisIcon className="size-5" aria-hidden="true" />
               More
             </button>

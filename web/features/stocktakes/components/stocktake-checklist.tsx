@@ -5,48 +5,62 @@ import { useParams, useRouter } from "next/navigation"
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core"
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { CheckIcon, GripVerticalIcon, PackagePlusIcon, TriangleAlertIcon } from "lucide-react"
+import { GripVerticalIcon, PackagePlusIcon, TriangleAlertIcon, XIcon } from "lucide-react"
 
 import { getApiErrorMessage } from "@/lib/api/get-api-error-message"
 import { getApiCategories } from "@/lib/api/generated/categories/categories"
 import type { CategoryResponse, StocktakeEntryResponse, StocktakeResponse } from "@/lib/api/generated/models"
-import { getApiStocktakesStocktakeId, postApiStocktakesStocktakeIdDiscoveredItems, putApiStocktakesStocktakeIdEntriesEntryId, putApiStocktakesStocktakeIdLocationOrder } from "@/lib/api/generated/stocktakes/stocktakes"
+import { getApiStocktakesStocktakeId, postApiStocktakesStocktakeIdDiscoveredItems, putApiStocktakesStocktakeIdLocationEntries, putApiStocktakesStocktakeIdLocationOrder } from "@/lib/api/generated/stocktakes/stocktakes"
 import { Button } from "@/shared/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog"
 import { Field, FieldLabel } from "@/shared/components/ui/field"
 import { Input } from "@/shared/components/ui/input"
+import { Progress } from "@/shared/components/ui/progress"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select"
 import { Spinner } from "@/shared/components/ui/spinner"
 import { showSuccessToast, useErrorToast } from "@/shared/hooks/use-error-toast"
-import { entryStatusLabel, formatQuantity, stocktakeEntryStatus } from "@/features/stocktakes/stocktake-status"
+import { formatQuantity, stocktakeEntryStatus } from "@/features/stocktakes/stocktake-status"
 
 type LocationGroup = { id: string; name: string; entries: StocktakeEntryResponse[] }
+type CountDrafts = Record<string, string>
+
+function draftCounts(entries: StocktakeEntryResponse[]): CountDrafts {
+  return Object.fromEntries(entries.map((entry) => [entry.id, String(entry.recordedQuantity ?? entry.estimatedQuantity)]))
+}
 
 export function StocktakeChecklist() {
   const { stocktakeId } = useParams<{ stocktakeId: string }>(); const router = useRouter()
   const [stocktake, setStocktake] = useState<StocktakeResponse>(); const [categories, setCategories] = useState<CategoryResponse[]>([])
-  const [error, setError] = useState<string>(); const [savingEntryId, setSavingEntryId] = useState<string>(); const [savingOrderId, setSavingOrderId] = useState<string>(); const [addLocation, setAddLocation] = useState<LocationGroup>()
+  const [drafts, setDrafts] = useState<CountDrafts>({}); const [error, setError] = useState<string>(); const [savingLocationId, setSavingLocationId] = useState<string>(); const [savingOrderId, setSavingOrderId] = useState<string>(); const [addLocation, setAddLocation] = useState<LocationGroup>(); const [locationStep, setLocationStep] = useState(0)
   useErrorToast(error, "Stocktake not saved")
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }))
-  async function load() { try { const [row, categoryRows] = await Promise.all([getApiStocktakesStocktakeId(stocktakeId), getApiCategories()]); setStocktake(row); setCategories(categoryRows.filter((category) => !category.isArchived)) } catch (loadError) { setError(getApiErrorMessage(loadError, "Unable to load stocktake.")) } }
+
+  async function load() {
+    try {
+      const [row, categoryRows] = await Promise.all([getApiStocktakesStocktakeId(stocktakeId), getApiCategories()])
+      setStocktake(row); setCategories(categoryRows.filter((category) => !category.isArchived)); setDrafts(draftCounts(row.entries))
+    } catch (loadError) { setError(getApiErrorMessage(loadError, "Unable to load stocktake.")) }
+  }
   useEffect(() => {
     Promise.all([getApiStocktakesStocktakeId(stocktakeId), getApiCategories()])
-      .then(([row, categoryRows]) => { setStocktake(row); setCategories(categoryRows.filter((category) => !category.isArchived)) })
+      .then(([row, categoryRows]) => { setStocktake(row); setCategories(categoryRows.filter((category) => !category.isArchived)); setDrafts(draftCounts(row.entries)) })
       .catch((loadError) => setError(getApiErrorMessage(loadError, "Unable to load stocktake.")))
   }, [stocktakeId])
-  function replaceEntry(updated: StocktakeEntryResponse) { setStocktake((current) => current ? { ...current, entries: current.entries.map((entry) => entry.id === updated.id ? updated : entry) } : current) }
-  async function saveEntry(entry: StocktakeEntryResponse, status: number, quantity: number | null) {
-    setSavingEntryId(entry.id)
-    try { replaceEntry(await putApiStocktakesStocktakeIdEntriesEntryId(stocktakeId, entry.id, { status, recordedQuantity: quantity, version: entry.version })) }
-    catch (saveError) { setError(getApiErrorMessage(saveError, "Unable to save count.")) }
-    finally { setSavingEntryId(undefined) }
-  }
+
   function groups(): LocationGroup[] {
     if (!stocktake) return []
     const values = new Map<string, LocationGroup>()
-    for (const entry of stocktake.entries) { const current = values.get(entry.storageLocationId) ?? { id: entry.storageLocationId, name: entry.locationName, entries: [] }; current.entries.push(entry); values.set(entry.storageLocationId, current) }
+    for (const entry of stocktake.entries) {
+      const current = values.get(entry.storageLocationId) ?? { id: entry.storageLocationId, name: entry.locationName, entries: [] }
+      current.entries.push(entry); values.set(entry.storageLocationId, current)
+    }
     return [...values.values()]
+  }
+  function replaceEntries(updated: StocktakeEntryResponse[]) {
+    const updatedById = new Map(updated.map((entry) => [entry.id, entry]))
+    setStocktake((current) => current ? { ...current, entries: current.entries.map((entry) => updatedById.get(entry.id) ?? entry) } : current)
+    setDrafts((current) => ({ ...current, ...draftCounts(updated) }))
   }
   async function reorder(locationId: string, activeId: string, overId: string) {
     if (!stocktake || activeId === overId) return
@@ -59,21 +73,34 @@ export function StocktakeChecklist() {
     catch (orderError) { setError(getApiErrorMessage(orderError, "Unable to save stocktake order.")); void load() }
     finally { setSavingOrderId(undefined) }
   }
-  const locationGroups = groups(); const resolved = stocktake?.entries.filter((entry) => entry.status !== stocktakeEntryStatus.pending).length ?? 0; const total = stocktake?.entries.length ?? 0; const readyForReview = total === resolved
+  const locationGroups = groups(); const resolved = stocktake?.entries.filter((entry) => entry.status !== stocktakeEntryStatus.pending).length ?? 0; const total = stocktake?.entries.length ?? 0; const currentStep = Math.min(locationStep, Math.max(0, locationGroups.length - 1)); const currentGroup = locationGroups[currentStep]; const totalSteps = locationGroups.length + 1
+  async function saveCurrentLocation() {
+    if (!currentGroup) return
+    const entries = currentGroup.entries.map((entry) => ({ entryId: entry.id, recordedQuantity: Number(drafts[entry.id] ?? entry.recordedQuantity ?? entry.estimatedQuantity), version: entry.version }))
+    if (entries.some((entry) => !Number.isFinite(entry.recordedQuantity) || entry.recordedQuantity < 0)) { setError("Enter a non-negative count for every item."); return }
+    setSavingLocationId(currentGroup.id)
+    try {
+      const updated = await putApiStocktakesStocktakeIdLocationEntries(stocktakeId, { storageLocationId: currentGroup.id, entries })
+      replaceEntries(updated); showSuccessToast(`${currentGroup.name} saved`)
+      if (currentStep < locationGroups.length - 1) setLocationStep((step) => step + 1)
+      else router.push(`/app/stocktakes/${stocktakeId}/review`)
+    } catch (saveError) { setError(getApiErrorMessage(saveError, "Unable to save this area.")) }
+    finally { setSavingLocationId(undefined) }
+  }
   if (!stocktake && !error) return <div className="flex min-h-64 items-center justify-center"><Spinner className="size-6" /></div>
   if (!stocktake) return <div className="flex min-h-64 items-center justify-center text-sm text-muted-foreground">Stocktake unavailable.</div>
-  return <div className="space-y-6"><header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">Stocktake</h1><p className="mt-1 text-sm text-muted-foreground">{resolved} of {total} entries saved. Your counts save automatically.</p></div><div className="flex gap-3"><Button variant="outline" onClick={() => router.replace("/app/stocktakes")}>Save and exit</Button><Button disabled={!readyForReview} onClick={() => router.push(`/app/stocktakes/${stocktakeId}/review`)}>Review stocktake</Button></div></header>{!readyForReview && <p className="text-sm text-muted-foreground">Resolve every entry before reviewing. You can confirm the estimate, enter a count, record zero, or skip it.</p>}<div className="space-y-6">{locationGroups.map((group) => <LocationChecklist key={group.id} group={group} sensors={sensors} savingOrder={savingOrderId === group.id} savingEntryId={savingEntryId} onReorder={(event) => { if (event.over) void reorder(group.id, String(event.active.id), String(event.over.id)) }} onSaveEntry={saveEntry} onAddItem={() => setAddLocation(group)} />)}</div>{!locationGroups.length && <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">This preset has no active pantry items.</CardContent></Card>}<AddDiscoveredItemDialog open={Boolean(addLocation)} location={addLocation} categories={categories} onOpenChange={(open) => { if (!open) setAddLocation(undefined) }} onAdded={(entry) => { setStocktake((current) => current ? { ...current, entries: [...current.entries, entry] } : current); setAddLocation(undefined); showSuccessToast("Item added to stocktake") }} onError={setError} stocktakeId={stocktakeId} /></div>
+  const savingCurrentLocation = savingLocationId === currentGroup?.id
+  return <div className="mx-auto max-w-4xl space-y-6"><header className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-2xl font-semibold">Stocktake</h1><p className="mt-1 text-sm text-muted-foreground">{resolved} of {total} item counts saved. Each area saves when you continue.</p></div><Button variant="outline" onClick={() => router.replace("/app/stocktakes")}>Exit stocktake</Button></header>{currentGroup && <div className="space-y-2"><div className="flex items-center justify-between text-sm"><span className="font-medium">{currentGroup.name}</span><span className="text-muted-foreground">Step {currentStep + 1} of {totalSteps}</span></div><Progress value={((currentStep + 1) / totalSteps) * 100} /></div>}{currentGroup ? <LocationChecklist key={currentGroup.id} group={currentGroup} drafts={drafts} sensors={sensors} saving={savingCurrentLocation || savingOrderId === currentGroup.id} savingOrder={savingOrderId === currentGroup.id} onDraftChange={(entryId, value) => setDrafts((current) => ({ ...current, [entryId]: value }))} onReorder={(event) => { if (event.over) void reorder(currentGroup.id, String(event.active.id), String(event.over.id)) }} onAddItem={() => setAddLocation(currentGroup)} /> : <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">This preset has no active pantry items.</CardContent></Card>}<div className="flex flex-wrap justify-between gap-3"><Button variant="outline" disabled={currentStep === 0 || Boolean(savingLocationId)} onClick={() => setLocationStep((step) => Math.max(0, step - 1))}>Back</Button><Button disabled={!currentGroup || Boolean(savingLocationId) || Boolean(savingOrderId)} onClick={() => void saveCurrentLocation()}>{savingCurrentLocation && <Spinner />}{currentStep < locationGroups.length - 1 ? "Next area" : "Review stocktake"}</Button></div><AddDiscoveredItemDialog open={Boolean(addLocation)} location={addLocation} categories={categories} onOpenChange={(open) => { if (!open) setAddLocation(undefined) }} onAdded={(entry) => { setStocktake((current) => current ? { ...current, entries: [...current.entries, entry] } : current); setDrafts((current) => ({ ...current, ...draftCounts([entry]) })); setAddLocation(undefined); showSuccessToast("Item added to stocktake") }} onError={setError} stocktakeId={stocktakeId} /></div>
 }
 
-function LocationChecklist({ group, sensors, savingOrder, savingEntryId, onReorder, onSaveEntry, onAddItem }: Readonly<{ group: LocationGroup; sensors: ReturnType<typeof useSensors>; savingOrder: boolean; savingEntryId?: string; onReorder: (event: DragEndEvent) => void; onSaveEntry: (entry: StocktakeEntryResponse, status: number, quantity: number | null) => void; onAddItem: () => void }>) {
+function LocationChecklist({ group, drafts, sensors, saving, savingOrder, onDraftChange, onReorder, onAddItem }: Readonly<{ group: LocationGroup; drafts: CountDrafts; sensors: ReturnType<typeof useSensors>; saving: boolean; savingOrder: boolean; onDraftChange: (entryId: string, value: string) => void; onReorder: (event: DragEndEvent) => void; onAddItem: () => void }>) {
   const resolved = group.entries.filter((entry) => entry.status !== stocktakeEntryStatus.pending).length
-  return <Card><CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle>{group.name}</CardTitle><CardDescription>{resolved} of {group.entries.length} entries saved{savingOrder ? " · Saving order…" : ""}</CardDescription></div><Button variant="outline" size="sm" onClick={onAddItem}><PackagePlusIcon />Add item</Button></div></CardHeader><CardContent><DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onReorder}><SortableContext items={group.entries.map((entry) => entry.id)} strategy={verticalListSortingStrategy}><div className="space-y-3">{group.entries.map((entry) => <SortableStocktakeEntry key={entry.id} entry={entry} saving={savingEntryId === entry.id || savingOrder} onSave={onSaveEntry} />)}</div></SortableContext></DndContext></CardContent></Card>
+  return <Card><CardHeader><div className="flex flex-wrap items-start justify-between gap-3"><div><CardTitle>{group.name}</CardTitle><CardDescription>{resolved} of {group.entries.length} item counts saved. Change every count you need, then continue.{savingOrder ? " Saving order…" : ""}</CardDescription></div><Button variant="outline" size="sm" disabled={saving} onClick={onAddItem}><PackagePlusIcon />Add item</Button></div></CardHeader><CardContent><DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onReorder}><SortableContext items={group.entries.map((entry) => entry.id)} strategy={verticalListSortingStrategy}><div className="space-y-3">{group.entries.map((entry) => <SortableStocktakeEntry key={entry.id} entry={entry} value={drafts[entry.id] ?? String(entry.recordedQuantity ?? entry.estimatedQuantity)} saving={saving} onChange={onDraftChange} />)}</div></SortableContext></DndContext></CardContent></Card>
 }
 
-function SortableStocktakeEntry({ entry, saving, onSave }: Readonly<{ entry: StocktakeEntryResponse; saving: boolean; onSave: (entry: StocktakeEntryResponse, status: number, quantity: number | null) => void }>) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id, disabled: saving }); const resolved = entry.status !== stocktakeEntryStatus.pending
-  function saveQuantity(event: React.FormEvent<HTMLFormElement>) { event.preventDefault(); const value = Number(new FormData(event.currentTarget).get("quantity")); if (!Number.isFinite(value) || value < 0) return; onSave(entry, value === 0 ? stocktakeEntryStatus.zero : stocktakeEntryStatus.corrected, value) }
-  return <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={isDragging ? "relative z-10 opacity-70" : undefined}><div className="rounded-lg border bg-background p-4"><div className="flex flex-wrap items-start gap-3"><Button type="button" size="icon-sm" variant="ghost" className="cursor-grab touch-none active:cursor-grabbing" aria-label={`Reorder ${entry.itemName}`} {...attributes} {...listeners}><GripVerticalIcon /></Button><div className="min-w-40 flex-1"><p className="font-medium">{entry.itemName}</p><p className="text-sm text-muted-foreground">Estimated: {formatQuantity(entry.estimatedQuantity, entry.trackingUnit)}</p></div>{resolved && <span className="inline-flex items-center gap-1 text-sm text-success"><CheckIcon className="size-4" />{entryStatusLabel(entry.status)}</span>}</div>{entry.isOutlier && <p className="mt-3 flex items-center gap-2 text-sm text-amber-700"><TriangleAlertIcon className="size-4" />This differs substantially from the estimate.</p>}<form className="mt-4 flex flex-wrap items-end gap-2" onSubmit={saveQuantity}><div className="min-w-40 flex-1"><FieldLabel htmlFor={`quantity-${entry.id}`}>Count</FieldLabel><Input key={`${entry.id}-${entry.recordedQuantity ?? entry.estimatedQuantity}`} id={`quantity-${entry.id}`} name="quantity" type="number" min="0" step="0.001" defaultValue={entry.recordedQuantity ?? entry.estimatedQuantity} disabled={saving} /></div><Button type="submit" variant="outline" disabled={saving}>Save count</Button><Button type="button" variant="outline" disabled={saving} onClick={() => onSave(entry, stocktakeEntryStatus.confirmed, Number(entry.estimatedQuantity))}>Confirm estimate</Button><Button type="button" variant="outline" disabled={saving} onClick={() => onSave(entry, stocktakeEntryStatus.zero, 0)}>Zero</Button><Button type="button" variant="ghost" disabled={saving} onClick={() => onSave(entry, stocktakeEntryStatus.skipped, null)}>Skip</Button></form></div></div>
+function SortableStocktakeEntry({ entry, value, saving, onChange }: Readonly<{ entry: StocktakeEntryResponse; value: string; saving: boolean; onChange: (entryId: string, value: string) => void }>) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: entry.id, disabled: saving })
+  return <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={isDragging ? "relative z-10 opacity-70" : undefined}><div className="rounded-lg border bg-background p-4"><div className="flex flex-wrap items-start gap-3"><Button type="button" size="icon-sm" variant="ghost" className="cursor-grab touch-none active:cursor-grabbing" aria-label={`Reorder ${entry.itemName}`} {...attributes} {...listeners}><GripVerticalIcon /></Button><div className="min-w-40 flex-1"><p className="font-medium">{entry.itemName}</p><p className="text-sm text-muted-foreground">Estimated: {formatQuantity(entry.estimatedQuantity, entry.trackingUnit)}</p></div></div>{entry.isOutlier && <p className="mt-3 flex items-center gap-2 text-sm text-amber-700"><TriangleAlertIcon className="size-4" />This differs substantially from the estimate.</p>}<div className="mt-4 flex flex-wrap items-end gap-2"><div className="min-w-40 flex-1"><FieldLabel htmlFor={`quantity-${entry.id}`}>Count</FieldLabel><Input id={`quantity-${entry.id}`} type="number" min="0" step="0.001" value={value} disabled={saving} onChange={(event) => onChange(entry.id, event.target.value)} /></div><Button type="button" variant="ghost" size="icon-sm" disabled={saving} aria-label={`Record zero for ${entry.itemName}`} title="Record zero" onClick={() => onChange(entry.id, "0")}><XIcon /></Button></div></div></div>
 }
 
 function AddDiscoveredItemDialog({ open, location, categories, onOpenChange, onAdded, onError, stocktakeId }: Readonly<{ open: boolean; location?: LocationGroup; categories: CategoryResponse[]; onOpenChange: (open: boolean) => void; onAdded: (entry: StocktakeEntryResponse) => void; onError: (message: string) => void; stocktakeId: string }>) {

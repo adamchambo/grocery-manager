@@ -11,6 +11,15 @@ public sealed record UpdateStocktakeEntryRequest(
     [Range(typeof(decimal), "0", "999999999999999.999")] decimal? RecordedQuantity,
     [Required] string Version);
 
+public sealed record SaveStocktakeLocationEntriesRequest(
+    Guid StorageLocationId,
+    [Required, MinLength(1)] IReadOnlyList<SaveStocktakeEntryRequest> Entries);
+
+public sealed record SaveStocktakeEntryRequest(
+    Guid EntryId,
+    [Range(typeof(decimal), "0", "999999999999999.999")] decimal RecordedQuantity,
+    [Required] string Version);
+
 public sealed record AddDiscoveredStocktakeItemRequest(
     [Required, StringLength(160)] string Name,
     Guid CategoryId,
