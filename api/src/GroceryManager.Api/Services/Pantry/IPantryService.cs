@@ -7,4 +7,6 @@ public interface IPantryService
     public Task<PantryResponse> CreateAsync(CreatePantryRequest request, CancellationToken cancellationToken);
     public Task<PantryResponse> GetCurrentAsync(CancellationToken cancellationToken);
     public Task<PantryResponse> UpdateCurrentAsync(UpdatePantryRequest request, CancellationToken cancellationToken);
+    public Task<ShoppingRoutineResponse> GetRoutineAsync(CancellationToken cancellationToken);
+    public Task<ShoppingRoutineResponse> UpdateRoutineAsync(UpdateShoppingRoutineRequest request, CancellationToken cancellationToken);
 }

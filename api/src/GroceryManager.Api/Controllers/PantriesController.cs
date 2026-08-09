@@ -28,4 +28,14 @@ public sealed class PantriesController(IPantryService pantryService) : Controlle
         UpdatePantryRequest request,
         CancellationToken cancellationToken) =>
         Ok(await pantryService.UpdateCurrentAsync(request, cancellationToken));
+
+    [HttpGet("current/routine")]
+    public async Task<ActionResult<ShoppingRoutineResponse>> GetRoutine(CancellationToken cancellationToken) =>
+        Ok(await pantryService.GetRoutineAsync(cancellationToken));
+
+    [HttpPut("current/routine")]
+    public async Task<ActionResult<ShoppingRoutineResponse>> UpdateRoutine(
+        UpdateShoppingRoutineRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await pantryService.UpdateRoutineAsync(request, cancellationToken));
 }

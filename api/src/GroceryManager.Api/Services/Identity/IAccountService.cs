@@ -11,4 +11,5 @@ public interface IAccountService
     public Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken);
     public Task<AccountResponse> GetCurrentAsync(CancellationToken cancellationToken);
     public Task<AccountResponse> UpdateCurrentAsync(UpdateAccountRequest request, CancellationToken cancellationToken);
+    public Task ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken);
 }

@@ -7,6 +7,8 @@
 import type {
   CreatePantryRequest,
   PantryResponse,
+  ShoppingRoutineResponse,
+  UpdateShoppingRoutineRequest,
   UpdatePantryRequest
 } from '../models';
 
@@ -71,4 +73,20 @@ export const putApiPantriesCurrent = async (updatePantryRequest: UpdatePantryReq
   }
 );}
 
+export const getGetApiPantriesCurrentRoutineUrl = () => `/api/pantries/current/routine`
+
+export const getApiPantriesCurrentRoutine = async (options?: Parameters<typeof apiFetch>[1]): Promise<ShoppingRoutineResponse> => {
+  return apiFetch<ShoppingRoutineResponse>(getGetApiPantriesCurrentRoutineUrl(), { ...options, method: 'GET' })
+}
+
+export const getPutApiPantriesCurrentRoutineUrl = () => `/api/pantries/current/routine`
+
+export const putApiPantriesCurrentRoutine = async (updateShoppingRoutineRequest: UpdateShoppingRoutineRequest, options?: Parameters<typeof apiFetch>[1]): Promise<ShoppingRoutineResponse> => {
+  return apiFetch<ShoppingRoutineResponse>(getPutApiPantriesCurrentRoutineUrl(), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateShoppingRoutineRequest),
+  })
+}
 

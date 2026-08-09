@@ -320,6 +320,15 @@ namespace GroceryManager.Api.Migrations
                     b.Property<Guid>("OwnerUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("PrimaryShopName")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<decimal>("ShoppingIntervalDays")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(18,3)")
+                        .HasDefaultValue(14m);
+
                     b.Property<DateTimeOffset>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -333,7 +342,10 @@ namespace GroceryManager.Api.Migrations
                     b.HasIndex("OwnerUserId")
                         .IsUnique();
 
-                    b.ToTable("Pantries", (string)null);
+                    b.ToTable("Pantries", t =>
+                        {
+                            t.HasCheckConstraint("CK_Pantries_ShoppingIntervalDays", "\"ShoppingIntervalDays\" > 0");
+                        });
                 });
 
             modelBuilder.Entity("GroceryManager.Api.Entities.Pantry.PantryItem", b =>

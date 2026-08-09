@@ -6,6 +6,7 @@
  */
 import type {
   AccountResponse,
+  ChangePasswordRequest,
   ForgotPasswordRequest,
   LoginRequest,
   RegisterAccountRequest,
@@ -154,4 +155,14 @@ export const putApiAccountsMe = async (updateAccountRequest: UpdateAccountReques
   }
 );}
 
+export const getPutApiAccountsMePasswordUrl = () => `/api/accounts/me/password`
+
+export const putApiAccountsMePassword = async (changePasswordRequest: ChangePasswordRequest, options?: Parameters<typeof apiFetch>[1]): Promise<void> => {
+  return apiFetch<void>(getPutApiAccountsMePasswordUrl(), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(changePasswordRequest),
+  })
+}
 

@@ -60,4 +60,13 @@ public sealed class AccountsController(IAccountService accountService) : Control
         UpdateAccountRequest request,
         CancellationToken cancellationToken) =>
         Ok(await accountService.UpdateCurrentAsync(request, cancellationToken));
+
+    [HttpPut("me/password")]
+    public async Task<IActionResult> ChangePassword(
+        ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        await accountService.ChangePasswordAsync(request, cancellationToken);
+        return NoContent();
+    }
 }

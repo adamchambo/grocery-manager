@@ -40,8 +40,11 @@ internal static class GroceryManagerModelConfiguration
         builder.ToTable("Pantries");
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Name).HasMaxLength(120).IsRequired();
+        builder.Property(x => x.PrimaryShopName).HasMaxLength(120);
+        builder.Property(x => x.ShoppingIntervalDays).HasColumnType(QuantityType).HasDefaultValue(14m);
         builder.Property(x => x.Version).IsConcurrencyToken();
         builder.HasIndex(x => x.OwnerUserId).IsUnique();
+        builder.ToTable("Pantries", table => table.HasCheckConstraint("CK_Pantries_ShoppingIntervalDays", "\"ShoppingIntervalDays\" > 0"));
         builder.HasOne<ApplicationUser>().WithOne().HasForeignKey<Pantry>(x => x.OwnerUserId)
             .OnDelete(DeleteBehavior.Restrict);
     }

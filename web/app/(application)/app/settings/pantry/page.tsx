@@ -1,3 +1,3 @@
-export default function PantrySettingsPage() {
-  return null;
-}
+import { redirect } from "next/navigation"
+
+export default function PantrySettingsPage() { redirect("/app/pantry/locations") }

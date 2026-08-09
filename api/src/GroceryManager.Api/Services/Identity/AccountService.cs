@@ -81,6 +81,13 @@ public sealed class AccountService(
         return ToResponse(user);
     }
 
+    public async Task ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var user = await FindCurrentAsync();
+        ThrowIfFailed(await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword));
+    }
+
     private async Task<ApplicationUser> FindCurrentAsync()
     {
         var userId = ServiceSupport.RequireUserId(currentUser);

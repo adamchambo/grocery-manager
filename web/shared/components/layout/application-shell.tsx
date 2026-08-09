@@ -43,7 +43,7 @@ const moreItems = [
   { href: "/app/history", label: "Inventory history", icon: HistoryIcon },
 ] as const
 
-const settingsItem = { href: "/app/settings/account", label: "Settings", icon: SettingsIcon } as const
+const settingsItem = { href: "/app/settings", label: "Settings", icon: SettingsIcon } as const
 
 function isActive(pathname: string, href: string, exact = false) {
   return exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`)
@@ -97,7 +97,7 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
           <div className="flex items-center gap-1">
             <ThemeToggle />
             <Button variant="ghost" size="icon" aria-label="Open account settings" asChild>
-              <Link href="/app/settings/account"><UserIcon aria-hidden="true" /></Link>
+              <Link href="/app/settings"><UserIcon aria-hidden="true" /></Link>
             </Button>
           </div>
         </header>

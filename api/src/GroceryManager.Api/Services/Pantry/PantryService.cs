@@ -43,6 +43,20 @@ public sealed class PantryService(
         return ToResponse(pantry);
     }
 
+    public async Task<ShoppingRoutineResponse> GetRoutineAsync(CancellationToken cancellationToken) =>
+        ToRoutineResponse(await GetCurrentEntityAsync(cancellationToken));
+
+    public async Task<ShoppingRoutineResponse> UpdateRoutineAsync(UpdateShoppingRoutineRequest request, CancellationToken cancellationToken)
+    {
+        var pantry = await GetCurrentEntityAsync(cancellationToken);
+        ServiceSupport.ApplyVersion(db, pantry, request.Version);
+        pantry.PrimaryShopName = string.IsNullOrWhiteSpace(request.PrimaryShopName) ? null : request.PrimaryShopName.Trim();
+        pantry.ShoppingIntervalDays = request.ShoppingIntervalDays;
+        pantry.UpdatedAtUtc = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return ToRoutineResponse(pantry);
+    }
+
     private async Task<Entities.Pantry.Pantry> GetCurrentEntityAsync(CancellationToken cancellationToken)
     {
         var userId = ServiceSupport.RequireUserId(currentUser);
@@ -53,4 +67,7 @@ public sealed class PantryService(
     private static PantryResponse ToResponse(Entities.Pantry.Pantry pantry) =>
         new(pantry.Id, pantry.Name, pantry.CreatedAtUtc, pantry.UpdatedAtUtc,
             ServiceSupport.EncodeVersion(pantry.Version));
+
+    private static ShoppingRoutineResponse ToRoutineResponse(Entities.Pantry.Pantry pantry) =>
+        new(pantry.PrimaryShopName, pantry.ShoppingIntervalDays, ServiceSupport.EncodeVersion(pantry.Version));
 }

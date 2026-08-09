@@ -27,4 +27,11 @@ public sealed record ResetPasswordRequest(
 public sealed record UpdateAccountRequest(
     [Required, EmailAddress, StringLength(256)] string Email);
 
+public sealed record ChangePasswordRequest(
+    [Required, StringLength(100, MinimumLength = 6)] string CurrentPassword,
+    [Required, StringLength(100, MinimumLength = 6),
+     RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).+$",
+         ErrorMessage = "Password must contain uppercase, lowercase, number, and special characters.")]
+    string NewPassword);
+
 public sealed record AccountResponse(Guid Id, string Email);

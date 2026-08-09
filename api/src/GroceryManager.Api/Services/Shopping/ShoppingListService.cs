@@ -37,6 +37,8 @@ public sealed class ShoppingListService(
     public async Task<ShoppingListResponse> GenerateAsync(GenerateShoppingListRequest request, CancellationToken cancellationToken)
     {
         var pantryId = await ServiceSupport.RequirePantryIdAsync(db, currentUser, cancellationToken);
+        var routineIntervalDays = await db.Pantries.Where(x => x.Id == pantryId)
+            .Select(x => x.ShoppingIntervalDays).SingleAsync(cancellationToken);
         var preset = request.ShoppingPresetId is Guid presetId
             ? await db.ShoppingPresets.SingleOrDefaultAsync(x => x.Id == presetId && x.PantryId == pantryId && !x.IsArchived, cancellationToken)
                 ?? throw new ArgumentException("The shopping preset is invalid.")
@@ -69,7 +71,7 @@ public sealed class ShoppingListService(
         {
             var stock = locations.Where(x => x.PantryItemId == item.Id)
                 .Sum(x => stocktakeQuantities?.GetValueOrDefault(x.Id, x.CurrentQuantity) ?? x.CurrentQuantity);
-            var required = CalculateRequired(item, preset?.CoverageDays ?? 0);
+            var required = CalculateRequired(item, routineIntervalDays);
             var purchase = RoundPurchase(item.TrackingUnit, Math.Max(0, required - stock));
             return (Item: item, Stock: stock, Required: required, Purchase: purchase);
         }).Where(x => x.Purchase > 0).OrderBy(x => categories[x.Item.CategoryId].Name).ThenBy(x => x.Item.Name).Select((x, index) => new ShoppingListItem
@@ -203,8 +205,8 @@ public sealed class ShoppingListService(
     {
         var list = await FindAsync(listId, cancellationToken);
         EnsureActive(list);
-        var coverage = list.SourcePresetId is Guid presetId
-            ? await db.ShoppingPresets.Where(x => x.Id == presetId).Select(x => x.CoverageDays).SingleAsync(cancellationToken) : 0;
+        var routineIntervalDays = await db.Pantries.Where(x => x.Id == list.PantryId)
+            .Select(x => x.ShoppingIntervalDays).SingleAsync(cancellationToken);
         var rows = await (from listItem in db.ShoppingListItems
                           join pantryItem in db.PantryItems on listItem.PantryItemId equals pantryItem.Id
                           where listItem.ShoppingListId == list.Id && listItem.Outcome == ShoppingListItemOutcome.Pending
@@ -215,7 +217,7 @@ public sealed class ShoppingListService(
         foreach (var row in rows)
         {
             var stock = stocks.GetValueOrDefault(row.PantryItem.Id);
-            var required = CalculateRequired(row.PantryItem, coverage);
+            var required = CalculateRequired(row.PantryItem, routineIntervalDays);
             row.ListItem.StockAtGeneration = stock; row.ListItem.RequiredAtGeneration = required;
             row.ListItem.SuggestedPurchaseQuantity = RoundPurchase(row.PantryItem.TrackingUnit, Math.Max(0, required - stock));
         }
