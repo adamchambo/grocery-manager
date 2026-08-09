@@ -49,11 +49,22 @@ public sealed class StocktakesController(IStocktakeService stocktakeService) : C
         CancellationToken cancellationToken) =>
         Ok(await stocktakeService.AddDiscoveredItemAsync(stocktakeId, request, cancellationToken));
 
+    [HttpPut("{stocktakeId:guid}/location-order")]
+    public async Task<IActionResult> UpdateLocationOrder(
+        Guid stocktakeId,
+        UpdateStocktakeLocationOrderRequest request,
+        CancellationToken cancellationToken)
+    {
+        await stocktakeService.UpdateLocationOrderAsync(stocktakeId, request, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("{stocktakeId:guid}/complete")]
     public async Task<ActionResult<StocktakeResponse>> Complete(
         Guid stocktakeId,
+        CompleteStocktakeRequest? request,
         CancellationToken cancellationToken) =>
-        Ok(await stocktakeService.CompleteAsync(stocktakeId, cancellationToken));
+        Ok(await stocktakeService.CompleteAsync(stocktakeId, request, cancellationToken));
 
     [HttpPost("{stocktakeId:guid}/cancel")]
     public async Task<ActionResult<StocktakeResponse>> Cancel(

@@ -158,6 +158,7 @@ internal static class GroceryManagerModelConfiguration
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32);
         builder.Property(x => x.Version).IsConcurrencyToken();
         builder.HasIndex(x => new { x.PantryId, x.StartedAtUtc }).IsDescending(false, true);
+        builder.HasIndex(x => x.PantryId).IsUnique().HasFilter("\"Status\" = 'InProgress'").HasDatabaseName("IX_Stocktakes_PantryId_InProgress");
         builder.HasOne<Pantry>().WithMany().HasForeignKey(x => x.PantryId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ShoppingPreset>().WithMany().HasForeignKey(x => x.ShoppingPresetId).OnDelete(DeleteBehavior.Restrict);
     }

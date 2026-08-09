@@ -65,11 +65,26 @@ public sealed class BackendFlowTests(PostgreSqlFixture fixture) : IClassFixture<
         await service.UpdateEntryAsync(stocktake.Id, entry.Id,
             new UpdateStocktakeEntryRequest(StocktakeEntryStatus.Corrected, 2, entry.Version),
             CancellationToken.None);
-        await service.CompleteAsync(stocktake.Id, CancellationToken.None);
+        await service.CompleteAsync(stocktake.Id, null, CancellationToken.None);
 
         Assert.Equal(2m, await db.PantryItemLocations.Where(x => x.PantryItemId == item.Id).Select(x => x.CurrentQuantity).SingleAsync());
         var adjustment = await db.InventoryAdjustments.SingleAsync(x => x.SourceStocktakeEntryId == entry.Id);
         Assert.Equal(-3m, adjustment.QuantityDelta);
+    }
+
+    [Fact]
+    public async Task StartingSecondStocktakeWhileOneIsActiveIsRejected()
+    {
+        await using var db = await CreateContextAsync();
+        var userId = await CreateUserAndPantryAsync(db, "active-stocktake@example.com");
+        await CreateItemAsync(db, userId, "Milk", TrackingUnit.Volume, null, null, 1);
+        var presetId = await GetEverythingPresetIdAsync(db, userId);
+        var service = new StocktakeService(db, new TestCurrentUserContext(userId));
+
+        await service.StartAsync(new StartStocktakeRequest(presetId), CancellationToken.None);
+
+        await Assert.ThrowsAsync<ConflictException>(() =>
+            service.StartAsync(new StartStocktakeRequest(presetId), CancellationToken.None));
     }
 
     [Fact]

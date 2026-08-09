@@ -11,6 +11,7 @@ using GroceryManager.Api.Persistence;
 using GroceryManager.Api.Services;
 using GroceryManager.Api.Services.Identity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace GroceryManager.Api.Services.Stocktakes;
 
@@ -34,6 +35,8 @@ public sealed class StocktakeService(
     public async Task<StocktakeResponse> StartAsync(StartStocktakeRequest request, CancellationToken cancellationToken)
     {
         var pantryId = await ServiceSupport.RequirePantryIdAsync(db, currentUser, cancellationToken);
+        if (await db.Stocktakes.AnyAsync(x => x.PantryId == pantryId && x.Status == StocktakeStatus.InProgress, cancellationToken))
+            throw new ConflictException("Finish or cancel the active stocktake before starting another.");
         if (request.ShoppingPresetId is not null && !await db.ShoppingPresets.AnyAsync(x => x.Id == request.ShoppingPresetId && x.PantryId == pantryId && !x.IsArchived, cancellationToken))
             throw new ArgumentException("The shopping preset is invalid.");
 
@@ -67,7 +70,14 @@ public sealed class StocktakeService(
             ItemSortOrderSnapshot = x.Location.SortOrder, PreviousConfirmedQuantity = x.Location.CurrentQuantity,
             EstimatedQuantity = Estimate(x.Item, x.Location, now), Status = StocktakeEntryStatus.Pending
         }));
-        await db.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            throw new ConflictException("Finish or cancel the active stocktake before starting another.");
+        }
         return await MapAsync(stocktake, cancellationToken);
     }
 
@@ -84,7 +94,8 @@ public sealed class StocktakeService(
         entry.ConfirmedAtUtc = request.Status is StocktakeEntryStatus.Confirmed or StocktakeEntryStatus.Corrected or StocktakeEntryStatus.Zero ? DateTimeOffset.UtcNow : null;
         entry.IsOutlier = entry.RecordedQuantity is decimal value && Math.Abs(value - entry.EstimatedQuantity) > Math.Max(1m, entry.EstimatedQuantity * 0.5m);
         await db.SaveChangesAsync(cancellationToken);
-        return ToResponse(entry);
+        var storageLocationId = await db.PantryItemLocations.Where(x => x.Id == entry.PantryItemLocationId).Select(x => x.StorageLocationId).SingleAsync(cancellationToken);
+        return ToResponse(entry, storageLocationId);
     }
 
     public async Task<StocktakeEntryResponse> AddDiscoveredItemAsync(Guid stocktakeId, AddDiscoveredStocktakeItemRequest request, CancellationToken cancellationToken)
@@ -98,27 +109,45 @@ public sealed class StocktakeService(
             ?? throw new ArgumentException("The storage location is invalid.");
         var now = DateTimeOffset.UtcNow;
         var item = new PantryItem { Id = Guid.NewGuid(), PantryId = stocktake.PantryId, CategoryId = category.Id, DefaultStorageLocationId = storage.Id, Name = request.Name.Trim(), TrackingUnit = request.TrackingUnit, BufferDays = 0, CreatedAtUtc = now, UpdatedAtUtc = now };
-        var location = new PantryItemLocation { Id = Guid.NewGuid(), PantryItemId = item.Id, StorageLocationId = storage.Id, CurrentQuantity = 0, UpdatedAtUtc = now };
+        var nextSortOrder = (await db.PantryItemLocations.Where(x => x.StorageLocationId == storage.Id).Select(x => (int?)x.SortOrder).MaxAsync(cancellationToken) ?? -1) + 1;
+        var location = new PantryItemLocation { Id = Guid.NewGuid(), PantryItemId = item.Id, StorageLocationId = storage.Id, SortOrder = nextSortOrder, CurrentQuantity = 0, UpdatedAtUtc = now };
         var entry = new StocktakeEntry
         {
             Id = Guid.NewGuid(), StocktakeId = stocktake.Id, PantryItemLocationId = location.Id,
             ItemNameSnapshot = item.Name, LocationNameSnapshot = storage.Name, TrackingUnitSnapshot = item.TrackingUnit.ToString(),
-            LocationSortOrderSnapshot = storage.SortOrder, PreviousConfirmedQuantity = 0, EstimatedQuantity = 0,
+            LocationSortOrderSnapshot = storage.SortOrder, ItemSortOrderSnapshot = nextSortOrder, PreviousConfirmedQuantity = 0, EstimatedQuantity = 0,
             RecordedQuantity = request.RecordedQuantity, Status = request.RecordedQuantity == 0 ? StocktakeEntryStatus.Zero : StocktakeEntryStatus.Corrected,
             ConfirmedAtUtc = now
         };
         db.AddRange(item, location, entry);
         await db.SaveChangesAsync(cancellationToken);
-        return ToResponse(entry);
+        return ToResponse(entry, storage.Id);
     }
 
-    public async Task<StocktakeResponse> CompleteAsync(Guid stocktakeId, CancellationToken cancellationToken)
+    public async Task UpdateLocationOrderAsync(Guid stocktakeId, UpdateStocktakeLocationOrderRequest request, CancellationToken cancellationToken)
+    {
+        var stocktake = await FindAsync(stocktakeId, cancellationToken);
+        EnsureInProgress(stocktake);
+        var entries = await (from entry in db.StocktakeEntries
+                             join itemLocation in db.PantryItemLocations on entry.PantryItemLocationId equals itemLocation.Id
+                             where entry.StocktakeId == stocktake.Id && itemLocation.StorageLocationId == request.StorageLocationId
+                             select entry).ToDictionaryAsync(x => x.PantryItemLocationId, cancellationToken);
+        if (entries.Count != request.PantryItemLocationIds.Count || entries.Count != request.PantryItemLocationIds.Distinct().Count() || request.PantryItemLocationIds.Any(id => !entries.ContainsKey(id)))
+            throw new ArgumentException("The stocktake order must include every item in the location exactly once.");
+
+        for (var index = 0; index < request.PantryItemLocationIds.Count; index++)
+            entries[request.PantryItemLocationIds[index]].ItemSortOrderSnapshot = index;
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<StocktakeResponse> CompleteAsync(Guid stocktakeId, CompleteStocktakeRequest? request, CancellationToken cancellationToken)
     {
         var stocktake = await FindAsync(stocktakeId, cancellationToken);
         EnsureInProgress(stocktake);
         var entries = await db.StocktakeEntries.Where(x => x.StocktakeId == stocktake.Id).ToListAsync(cancellationToken);
         if (entries.Any(x => x.Status == StocktakeEntryStatus.Pending))
             throw new ConflictException("Every stocktake entry must be confirmed, corrected, zero, or skipped.");
+        await ApplyLocationItemOrdersAsync(stocktake.PantryId, request?.LocationItemOrders, cancellationToken);
         var locationIds = entries.Select(x => x.PantryItemLocationId).ToArray();
         var locations = await db.PantryItemLocations.Where(x => locationIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
         var now = DateTimeOffset.UtcNow;
@@ -138,6 +167,33 @@ public sealed class StocktakeService(
         stocktake.Status = StocktakeStatus.Completed; stocktake.CompletedAtUtc = now;
         await db.SaveChangesAsync(cancellationToken);
         return await MapAsync(stocktake, cancellationToken);
+    }
+
+    private async Task ApplyLocationItemOrdersAsync(Guid pantryId, IReadOnlyList<StocktakeLocationItemOrderRequest>? locationOrders, CancellationToken cancellationToken)
+    {
+        if (locationOrders is null || locationOrders.Count == 0) return;
+        if (locationOrders.Select(x => x.StorageLocationId).Distinct().Count() != locationOrders.Count)
+            throw new ArgumentException("Each storage location can only be ordered once.");
+
+        foreach (var order in locationOrders)
+        {
+            var locationExists = await db.StorageLocations.AnyAsync(x => x.Id == order.StorageLocationId && x.PantryId == pantryId && !x.IsArchived, cancellationToken);
+            if (!locationExists) throw new ArgumentException("The storage location is invalid.");
+
+            var rows = await (from itemLocation in db.PantryItemLocations
+                              join item in db.PantryItems on itemLocation.PantryItemId equals item.Id
+                              where itemLocation.StorageLocationId == order.StorageLocationId && item.PantryId == pantryId && !item.IsArchived
+                              select itemLocation).ToDictionaryAsync(x => x.Id, cancellationToken);
+            if (rows.Count != order.PantryItemLocationIds.Count || rows.Count != order.PantryItemLocationIds.Distinct().Count() || order.PantryItemLocationIds.Any(id => !rows.ContainsKey(id)))
+                throw new ArgumentException("The item order must include every active item in the storage location exactly once.");
+
+            for (var index = 0; index < order.PantryItemLocationIds.Count; index++)
+            {
+                var row = rows[order.PantryItemLocationIds[index]];
+                row.SortOrder = index;
+                row.UpdatedAtUtc = DateTimeOffset.UtcNow;
+            }
+        }
     }
 
     public async Task<StocktakeResponse> CancelAsync(Guid stocktakeId, CancellationToken cancellationToken)
@@ -183,15 +239,17 @@ public sealed class StocktakeService(
         var ids = stocktakes.Select(x => x.Id).ToArray();
         var entries = await db.StocktakeEntries.AsNoTracking().Where(x => ids.Contains(x.StocktakeId))
             .OrderBy(x => x.LocationSortOrderSnapshot).ThenBy(x => x.ItemSortOrderSnapshot).ToListAsync(cancellationToken);
+        var storageLocationIds = await db.PantryItemLocations.AsNoTracking().Where(x => entries.Select(y => y.PantryItemLocationId).Contains(x.Id))
+            .ToDictionaryAsync(x => x.Id, x => x.StorageLocationId, cancellationToken);
         return stocktakes.Select(x => new StocktakeResponse(x.Id, x.ShoppingPresetId, x.Status, x.StartedAtUtc, x.CompletedAtUtc,
-            entries.Where(y => y.StocktakeId == x.Id).Select(ToResponse).ToList(), ServiceSupport.EncodeVersion(x.Version))).ToList();
+            entries.Where(y => y.StocktakeId == x.Id).Select(y => ToResponse(y, storageLocationIds[y.PantryItemLocationId])).ToList(), ServiceSupport.EncodeVersion(x.Version))).ToList();
     }
 
     private async Task<StocktakeResponse> MapAsync(Stocktake stocktake, CancellationToken cancellationToken) =>
         (await MapManyAsync([stocktake], cancellationToken))[0];
 
-    private static StocktakeEntryResponse ToResponse(StocktakeEntry x) =>
-        new(x.Id, x.PantryItemLocationId, x.ItemNameSnapshot, x.LocationNameSnapshot, x.TrackingUnitSnapshot,
+    private static StocktakeEntryResponse ToResponse(StocktakeEntry x, Guid storageLocationId) =>
+        new(x.Id, x.PantryItemLocationId, storageLocationId, x.ItemNameSnapshot, x.LocationNameSnapshot, x.TrackingUnitSnapshot,
             x.PreviousConfirmedQuantity, x.EstimatedQuantity, x.RecordedQuantity, x.Status, x.IsOutlier,
             x.ConfirmedAtUtc, ServiceSupport.EncodeVersion(x.Version));
 }

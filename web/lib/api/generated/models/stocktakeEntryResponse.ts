@@ -9,6 +9,7 @@ import type { StocktakeEntryStatus } from './stocktakeEntryStatus';
 export interface StocktakeEntryResponse {
   id: string;
   pantryItemLocationId: string;
+  storageLocationId: string;
   itemName: string;
   locationName: string;
   trackingUnit: string;

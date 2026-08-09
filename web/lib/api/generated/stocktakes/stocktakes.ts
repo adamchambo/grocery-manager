@@ -6,12 +6,14 @@
  */
 import type {
   AddDiscoveredStocktakeItemRequest,
+  CompleteStocktakeRequest,
   GetApiStocktakesParams,
   PagedResponseOfStocktakeResponse,
   StartStocktakeRequest,
   StocktakeEntryResponse,
   StocktakeResponse,
-  UpdateStocktakeEntryRequest
+  UpdateStocktakeEntryRequest,
+  UpdateStocktakeLocationOrderRequest
 } from '../models';
 
 import { apiFetch } from '../../api-client';
@@ -126,6 +128,19 @@ export const postApiStocktakesStocktakeIdDiscoveredItems = async (stocktakeId: s
   }
 );}
 
+export const getPutApiStocktakesStocktakeIdLocationOrderUrl = (stocktakeId: string,) => `/api/stocktakes/${stocktakeId}/location-order`
+
+export const putApiStocktakesStocktakeIdLocationOrder = async (stocktakeId: string,
+    updateStocktakeLocationOrderRequest: UpdateStocktakeLocationOrderRequest, options?: Parameters<typeof apiFetch>[1]): Promise<void> => {
+  return apiFetch<void>(getPutApiStocktakesStocktakeIdLocationOrderUrl(stocktakeId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateStocktakeLocationOrderRequest)
+  }
+);}
+
 
 export const getPostApiStocktakesStocktakeIdCompleteUrl = (stocktakeId: string,) => {
 
@@ -135,12 +150,14 @@ export const getPostApiStocktakesStocktakeIdCompleteUrl = (stocktakeId: string,)
   return `/api/stocktakes/${stocktakeId}/complete`
 }
 
-export const postApiStocktakesStocktakeIdComplete = async (stocktakeId: string, options?: Parameters<typeof apiFetch>[1]): Promise<StocktakeResponse> => {
+export const postApiStocktakesStocktakeIdComplete = async (stocktakeId: string, completeStocktakeRequest?: CompleteStocktakeRequest, options?: Parameters<typeof apiFetch>[1]): Promise<StocktakeResponse> => {
 
   return apiFetch<StocktakeResponse>(getPostApiStocktakesStocktakeIdCompleteUrl(stocktakeId),
   {
     ...options,
-    method: 'POST'
+    method: 'POST',
+    headers: completeStocktakeRequest ? { 'Content-Type': 'application/json', ...options?.headers } : options?.headers,
+    body: completeStocktakeRequest ? JSON.stringify(completeStocktakeRequest) : undefined
 
 
   }
@@ -165,5 +182,3 @@ export const postApiStocktakesStocktakeIdCancel = async (stocktakeId: string, op
 
   }
 );}
-
-

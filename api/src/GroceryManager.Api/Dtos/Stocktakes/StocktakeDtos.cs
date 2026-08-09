@@ -18,9 +18,21 @@ public sealed record AddDiscoveredStocktakeItemRequest(
     TrackingUnit TrackingUnit,
     [Range(typeof(decimal), "0", "999999999999999.999")] decimal RecordedQuantity);
 
+public sealed record CompleteStocktakeRequest(
+    IReadOnlyList<StocktakeLocationItemOrderRequest>? LocationItemOrders);
+
+public sealed record StocktakeLocationItemOrderRequest(
+    Guid StorageLocationId,
+    [Required, MinLength(1)] IReadOnlyList<Guid> PantryItemLocationIds);
+
+public sealed record UpdateStocktakeLocationOrderRequest(
+    Guid StorageLocationId,
+    [Required, MinLength(1)] IReadOnlyList<Guid> PantryItemLocationIds);
+
 public sealed record StocktakeEntryResponse(
     Guid Id,
     Guid PantryItemLocationId,
+    Guid StorageLocationId,
     string ItemName,
     string LocationName,
     string TrackingUnit,

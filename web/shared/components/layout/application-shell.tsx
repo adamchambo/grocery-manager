@@ -83,7 +83,7 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
         </nav>
         <div className="space-y-1 border-t pt-4">
           <DesktopNavLink item={settingsItem} active={isActive(pathname, settingsItem.href)} />
-          <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-muted-foreground" onClick={signOut} disabled={isSigningOut}>
+          <Button variant="ghost" className="w-full justify-start gap-3 px-3 text-muted-foreground cursor-pointer" onClick={signOut} disabled={isSigningOut}>
             <LogOutIcon className="size-4" aria-hidden="true" />
             {isSigningOut ? "Signing out…" : "Sign out"}
           </Button>

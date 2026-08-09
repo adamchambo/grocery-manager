@@ -1,3 +1,5 @@
+import { AuthenticationGate } from "@/features/auth/components/authentication-gate"
+
 export default function Home() {
-  return null;
+  return <AuthenticationGate authenticatedRedirectTo="/app" unauthenticatedRedirectTo="/login" />
 }

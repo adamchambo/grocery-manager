@@ -20,6 +20,13 @@ public interface IStocktakeService
         Guid stocktakeId,
         AddDiscoveredStocktakeItemRequest request,
         CancellationToken cancellationToken);
-    public Task<StocktakeResponse> CompleteAsync(Guid stocktakeId, CancellationToken cancellationToken);
+    public Task UpdateLocationOrderAsync(
+        Guid stocktakeId,
+        UpdateStocktakeLocationOrderRequest request,
+        CancellationToken cancellationToken);
+    public Task<StocktakeResponse> CompleteAsync(
+        Guid stocktakeId,
+        CompleteStocktakeRequest? request,
+        CancellationToken cancellationToken);
     public Task<StocktakeResponse> CancelAsync(Guid stocktakeId, CancellationToken cancellationToken);
 }

@@ -769,6 +769,11 @@ namespace GroceryManager.Api.Migrations
                     b.HasIndex("PantryId", "StartedAtUtc")
                         .IsDescending(false, true);
 
+                    b.HasIndex("PantryId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Stocktakes_PantryId_InProgress")
+                        .HasFilter("\"Status\" = 'InProgress'");
+
                     b.ToTable("Stocktakes", (string)null);
                 });
 
