@@ -10,6 +10,7 @@ using GroceryManager.Api.Enums.Stocktakes;
 using GroceryManager.Api.IntegrationTests.Infrastructure;
 using GroceryManager.Api.Persistence;
 using GroceryManager.Api.Services.InventoryHistory;
+using GroceryManager.Api.Services.Documents;
 using GroceryManager.Api.Services.Pantry;
 using GroceryManager.Api.Services.Shopping;
 using GroceryManager.Api.Services.Stocktakes;
@@ -69,6 +70,34 @@ public sealed class BackendFlowTests(PostgreSqlFixture fixture) : IClassFixture<
         var reordered = await service.GetAsync(list.Id, CancellationToken.None);
         Assert.True(reordered.UsesCustomOrder);
         Assert.Equal(["Rice", "Bread"], reordered.Items.Select(x => x.ItemName));
+    }
+
+    [Fact]
+    public async Task ActiveListsFlagTrackedItemsThatAlsoAppearOnAnotherList()
+    {
+        await using var db = await CreateContextAsync();
+        var userId = await CreateUserAndPantryAsync(db, "duplicate-shopping@example.com");
+        await CreateItemAsync(db, userId, "Bread", TrackingUnit.Package, 1, 7, 0);
+        var presetId = await GetEverythingPresetIdAsync(db, userId);
+        var service = new ShoppingListService(db, new TestCurrentUserContext(userId));
+        var first = await service.GenerateAsync(new GenerateShoppingListRequest(presetId, null, null), CancellationToken.None);
+        await service.GenerateAsync(new GenerateShoppingListRequest(presetId, null, null), CancellationToken.None);
+
+        Assert.True((await service.GetAsync(first.Id, CancellationToken.None)).Items.Single().IsOnAnotherActiveList);
+    }
+
+    [Fact]
+    public async Task ShoppingListPdfPaginatesEveryItem()
+    {
+        await using var db = await CreateContextAsync();
+        var userId = await CreateUserAndPantryAsync(db, "shopping-pdf@example.com");
+        var service = new ShoppingListService(db, new TestCurrentUserContext(userId));
+        var list = await service.GenerateAsync(new GenerateShoppingListRequest(null, null, null), CancellationToken.None);
+        for (var index = 0; index < 39; index++)
+            await service.AddItemAsync(list.Id, new AddShoppingListItemRequest($"Item {index}", 1, false, null, null, null), CancellationToken.None);
+
+        var pdf = await new ShoppingListDocumentService(db, new TestCurrentUserContext(userId)).GeneratePdfAsync(list.Id, CancellationToken.None);
+        Assert.Equal(2, System.Text.Encoding.ASCII.GetString(pdf).Split("/Type /Page /Parent").Length - 1);
     }
 
     [Fact]

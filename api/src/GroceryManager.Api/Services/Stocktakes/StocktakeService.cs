@@ -1,11 +1,8 @@
 using GroceryManager.Api.Common.Dtos;
 using GroceryManager.Api.Common.Exceptions;
 using GroceryManager.Api.Dtos.Stocktakes;
-using GroceryManager.Api.Entities.InventoryHistory;
 using GroceryManager.Api.Entities.Pantry;
 using GroceryManager.Api.Entities.Stocktakes;
-using GroceryManager.Api.Enums.InventoryHistory;
-using GroceryManager.Api.Enums.ShoppingPresets;
 using GroceryManager.Api.Enums.Stocktakes;
 using GroceryManager.Api.Persistence;
 using GroceryManager.Api.Services;
@@ -37,38 +34,24 @@ public sealed class StocktakeService(
         var pantryId = await ServiceSupport.RequirePantryIdAsync(db, currentUser, cancellationToken);
         if (await db.Stocktakes.AnyAsync(x => x.PantryId == pantryId && x.Status == StocktakeStatus.InProgress, cancellationToken))
             throw new ConflictException("Finish or cancel the active stocktake before starting another.");
-        if (request.ShoppingPresetId is not null && !await db.ShoppingPresets.AnyAsync(x => x.Id == request.ShoppingPresetId && x.PantryId == pantryId && !x.IsArchived, cancellationToken))
-            throw new ArgumentException("The shopping preset is invalid.");
-
         var itemQuery = db.PantryItems.Where(x => x.PantryId == pantryId && !x.IsArchived);
-        if (request.ShoppingPresetId is Guid presetId)
-        {
-            var preset = await db.ShoppingPresets.SingleAsync(x => x.Id == presetId, cancellationToken);
-            if (!preset.IsEverythingPreset)
-            {
-                var categoryIds = db.PresetCategories.Where(x => x.ShoppingPresetId == presetId).Select(x => x.CategoryId);
-                var includedIds = db.PresetItemRules.Where(x => x.ShoppingPresetId == presetId && x.RuleType == PresetItemRuleType.Include).Select(x => x.PantryItemId);
-                var excludedIds = db.PresetItemRules.Where(x => x.ShoppingPresetId == presetId && x.RuleType == PresetItemRuleType.Exclude).Select(x => x.PantryItemId);
-                itemQuery = itemQuery.Where(x => (categoryIds.Contains(x.CategoryId) || includedIds.Contains(x.Id)) && !excludedIds.Contains(x.Id));
-            }
-        }
 
         var data = await (from item in itemQuery
                           join location in db.PantryItemLocations on item.Id equals location.PantryItemId
                           join storage in db.StorageLocations on location.StorageLocationId equals storage.Id
                           where !storage.IsArchived
-                          orderby storage.SortOrder, location.SortOrder
+                          orderby storage.SortOrder, item.Name
                           select new { Item = item, Location = location, Storage = storage }).ToListAsync(cancellationToken);
         var now = DateTimeOffset.UtcNow;
-        var stocktake = new Stocktake { Id = Guid.NewGuid(), PantryId = pantryId, ShoppingPresetId = request.ShoppingPresetId, Status = StocktakeStatus.InProgress, StartedAtUtc = now };
+        var stocktake = new Stocktake { Id = Guid.NewGuid(), PantryId = pantryId, Status = StocktakeStatus.InProgress, StartedAtUtc = now };
         db.Stocktakes.Add(stocktake);
         db.StocktakeEntries.AddRange(data.Select(x => new StocktakeEntry
         {
             Id = Guid.NewGuid(), StocktakeId = stocktake.Id, PantryItemLocationId = x.Location.Id,
             ItemNameSnapshot = x.Item.Name, LocationNameSnapshot = x.Storage.Name,
             TrackingUnitSnapshot = x.Item.TrackingUnit.ToString(), LocationSortOrderSnapshot = x.Storage.SortOrder,
-            ItemSortOrderSnapshot = x.Location.SortOrder, PreviousConfirmedQuantity = x.Location.CurrentQuantity,
-            EstimatedQuantity = Estimate(x.Item, x.Location, now), Status = StocktakeEntryStatus.Pending
+            ItemSortOrderSnapshot = 0, PreviousConfirmedQuantity = 0,
+            EstimatedQuantity = 0, Status = StocktakeEntryStatus.Pending
         }));
         try
         {
@@ -92,7 +75,7 @@ public sealed class StocktakeService(
         entry.Status = request.Status;
         entry.RecordedQuantity = request.Status == StocktakeEntryStatus.Zero ? 0 : request.RecordedQuantity;
         entry.ConfirmedAtUtc = request.Status is StocktakeEntryStatus.Confirmed or StocktakeEntryStatus.Corrected or StocktakeEntryStatus.Zero ? DateTimeOffset.UtcNow : null;
-        entry.IsOutlier = entry.RecordedQuantity is decimal value && Math.Abs(value - entry.EstimatedQuantity) > Math.Max(1m, entry.EstimatedQuantity * 0.5m);
+        entry.IsOutlier = false;
         await db.SaveChangesAsync(cancellationToken);
         var storageLocationId = await db.PantryItemLocations.Where(x => x.Id == entry.PantryItemLocationId).Select(x => x.StorageLocationId).SingleAsync(cancellationToken);
         return ToResponse(entry, storageLocationId);
@@ -120,13 +103,9 @@ public sealed class StocktakeService(
             var entry = entries[requestEntry.EntryId];
             ServiceSupport.ApplyVersion(db, entry, requestEntry.Version);
             entry.RecordedQuantity = requestEntry.RecordedQuantity;
-            entry.Status = requestEntry.RecordedQuantity == 0
-                ? StocktakeEntryStatus.Zero
-                : requestEntry.RecordedQuantity == entry.EstimatedQuantity
-                    ? StocktakeEntryStatus.Confirmed
-                    : StocktakeEntryStatus.Corrected;
+            entry.Status = requestEntry.RecordedQuantity == 0 ? StocktakeEntryStatus.Zero : StocktakeEntryStatus.Confirmed;
             entry.ConfirmedAtUtc = now;
-            entry.IsOutlier = Math.Abs(requestEntry.RecordedQuantity - entry.EstimatedQuantity) > Math.Max(1m, entry.EstimatedQuantity * 0.5m);
+            entry.IsOutlier = false;
         }
         await db.SaveChangesAsync(cancellationToken);
         return rows.Select(x => ToResponse(x.Entry, x.StorageLocationId)).ToList();
@@ -179,25 +158,9 @@ public sealed class StocktakeService(
         var stocktake = await FindAsync(stocktakeId, cancellationToken);
         EnsureInProgress(stocktake);
         var entries = await db.StocktakeEntries.Where(x => x.StocktakeId == stocktake.Id).ToListAsync(cancellationToken);
-        if (entries.Any(x => x.Status == StocktakeEntryStatus.Pending))
-            throw new ConflictException("Every stocktake entry must be confirmed, corrected, zero, or skipped.");
-        await ApplyLocationItemOrdersAsync(stocktake.PantryId, request?.LocationItemOrders, cancellationToken);
-        var locationIds = entries.Select(x => x.PantryItemLocationId).ToArray();
-        var locations = await db.PantryItemLocations.Where(x => locationIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
+        if (entries.Any(x => x.Status == StocktakeEntryStatus.Pending || x.RecordedQuantity is null))
+            throw new ConflictException("Enter a quantity for every item before generating the shopping list.");
         var now = DateTimeOffset.UtcNow;
-        foreach (var entry in entries.Where(x => x.Status != StocktakeEntryStatus.Skipped))
-        {
-            var location = locations[entry.PantryItemLocationId];
-            var quantity = entry.RecordedQuantity ?? throw new InvalidOperationException("A confirmed entry requires a quantity.");
-            var delta = quantity - location.CurrentQuantity;
-            location.CurrentQuantity = quantity; location.LastConfirmedAtUtc = now; location.UpdatedAtUtc = now;
-            db.InventoryAdjustments.Add(new InventoryAdjustment
-            {
-                Id = Guid.NewGuid(), PantryItemLocationId = location.Id, SourceStocktakeEntryId = entry.Id,
-                CreatedByUserId = ServiceSupport.RequireUserId(currentUser), AdjustmentType = InventoryAdjustmentType.StocktakeConfirmation,
-                QuantityDelta = delta, IdempotencyKey = $"stocktake:{entry.Id}", CreatedAtUtc = now
-            });
-        }
         stocktake.Status = StocktakeStatus.Completed; stocktake.CompletedAtUtc = now;
         await db.SaveChangesAsync(cancellationToken);
         return await MapAsync(stocktake, cancellationToken);
@@ -245,14 +208,6 @@ public sealed class StocktakeService(
         var pantryId = await ServiceSupport.RequirePantryIdAsync(db, currentUser, cancellationToken);
         return await db.Stocktakes.SingleOrDefaultAsync(x => x.Id == id && x.PantryId == pantryId, cancellationToken)
             ?? throw new KeyNotFoundException("Stocktake not found.");
-    }
-
-    private static decimal Estimate(PantryItem item, PantryItemLocation location, DateTimeOffset now)
-    {
-        if (item.ConsumptionQuantity is not decimal quantity || item.ConsumptionPeriodDays is not decimal days || location.LastConfirmedAtUtc is null)
-            return location.CurrentQuantity;
-        var elapsedDays = Math.Max(0m, (decimal)(now - location.LastConfirmedAtUtc.Value).TotalDays);
-        return Math.Max(0m, location.CurrentQuantity - quantity / days * elapsedDays);
     }
 
     private static void ValidateEntry(StocktakeEntryStatus status, decimal? quantity)

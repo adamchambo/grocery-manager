@@ -20,21 +20,19 @@ public sealed class ShoppingListDocumentService(
         var items = await db.ShoppingListItems.AsNoTracking().Where(x => x.ShoppingListId == list.Id)
             .OrderBy(x => x.SortOrder).ToListAsync(cancellationToken);
 
-        var lines = new List<string> { list.Name, $"Generated {list.GeneratedAtUtc:d MMM yyyy}" };
-        lines.AddRange(items.Select(x =>
-        {
-            var quantity = x.Outcome is ShoppingListItemOutcome.Purchased or ShoppingListItemOutcome.PartiallyPurchased
-                ? x.ActualPurchaseQuantity : x.SuggestedPurchaseQuantity;
-            return $"{x.ItemNameSnapshot} - {(quantity ?? 0).ToString("0.###", CultureInfo.InvariantCulture)}";
-        }));
-        return BuildPdf(lines);
+        return BuildPdf(list.Name, list.GeneratedAtUtc, items);
     }
 
-    private static byte[] BuildPdf(IEnumerable<string> lines)
+    private static byte[] BuildPdf(string name, DateTimeOffset generatedAtUtc, IReadOnlyList<GroceryManager.Api.Entities.Shopping.ShoppingListItem> items)
     {
-        var allLines = lines.ToList();
-        var pages = allLines.Chunk(38).ToList();
-        if (pages.Count == 0) pages.Add([]);
+        var sections = items.GroupBy(x => string.IsNullOrWhiteSpace(x.CategoryNameSnapshot) ? "Other items" : x.CategoryNameSnapshot)
+            .OrderBy(x => x.Key).SelectMany(group => new[] { (Text: group.Key, IsHeading: true) }.Concat(group.Select(item =>
+            {
+                var quantity = item.Outcome is ShoppingListItemOutcome.Purchased or ShoppingListItemOutcome.PartiallyPurchased ? item.ActualPurchaseQuantity : item.SuggestedPurchaseQuantity;
+                var unit = string.IsNullOrWhiteSpace(item.TrackingUnitSnapshot) ? "" : $" {item.TrackingUnitSnapshot.ToLowerInvariant()}";
+                return (Text: $"{item.ItemNameSnapshot}|{(quantity ?? 0).ToString("0.###", CultureInfo.InvariantCulture)}{unit}", IsHeading: false);
+            }))).ToList();
+        var pages = sections.Chunk(28).ToList(); if (pages.Count == 0) pages.Add([]);
         var fontObjectNumber = 3 + (pages.Count * 2);
         var objects = new List<string>
         {
@@ -43,16 +41,26 @@ public sealed class ShoppingListDocumentService(
         };
         for (var pageIndex = 0; pageIndex < pages.Count; pageIndex++)
         {
-            var pageLines = pages[pageIndex];
-            var content = new StringBuilder("BT /F1 18 Tf 50 790 Td ");
-            var first = true;
-            foreach (var line in pageLines)
+            var content = new StringBuilder("q 0.12 0.48 0.27 rg 0 800 612 42 re f Q ");
+            content.Append("BT /F2 24 Tf 50 754 Td (").Append(Escape(name)).Append(") Tj ET ");
+            content.Append("BT /F1 10 Tf 50 735 Td (Generated ").Append(generatedAtUtc.ToString("d MMM yyyy", CultureInfo.InvariantCulture)).Append(") Tj ET ");
+            var y = 695;
+            foreach (var line in pages[pageIndex])
             {
-                if (!first) content.Append("0 -20 Td ");
-                content.Append('(').Append(Escape(line)).Append(") Tj ");
-                first = false;
+                if (line.IsHeading)
+                {
+                    content.Append("q 0.93 g 50 ").Append(y - 6).Append(" 512 22 re f Q ");
+                    content.Append("BT /F2 11 Tf 62 ").Append(y).Append(" Td (").Append(Escape(line.Text)).Append(") Tj ET "); y -= 32;
+                }
+                else
+                {
+                    var parts = line.Text.Split('|', 2);
+                    content.Append("0.35 w 0.55 G 62 ").Append(y - 10).Append(" 12 12 re S ");
+                    content.Append("BT /F1 12 Tf 86 ").Append(y - 1).Append(" Td (").Append(Escape(parts[0])).Append(") Tj ET ");
+                    content.Append("BT /F2 12 Tf 500 ").Append(y - 1).Append(" Td (").Append(Escape(parts[1])).Append(") Tj ET "); y -= 27;
+                }
             }
-            content.Append("ET");
+            content.Append("BT /F1 9 Tf 50 38 Td (Grocery Manager) Tj ET ");
             var stream = content.ToString();
             var contentObjectNumber = 4 + (pageIndex * 2);
             objects.Add($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 {fontObjectNumber} 0 R >> >> /Contents {contentObjectNumber} 0 R >>");
