@@ -5,10 +5,10 @@
 
 :root {
   color-scheme: light;
-  --background: #f7f8f4;
+  --background: #f8faf7;
   --foreground: #182018;
   --surface: #ffffff;
-  --surface-muted: #eff2ea;
+  --surface-muted: #f0f3ed;
   --card: #ffffff;
   --card-foreground: #182018;
   --popover: #ffffff;
@@ -17,8 +17,8 @@
   --secondary-foreground: #182018;
   --muted: #eff2ea;
   --muted-foreground: #667064;
-  --border: #d8ded3;
-  --input: #d8ded3;
+  --border: #e0e5dc;
+  --input: #dce3d8;
   --primary: #2f6b3b;
   --primary-hover: #255a31;
   --primary-foreground: #ffffff;
@@ -29,7 +29,7 @@
   --success: #2f6b3b;
   --warning: #a15c00;
   --ring: #4c8c58;
-  --radius: 0.75rem;
+  --radius: 0.875rem;
 }
 
 .dark {
@@ -98,4 +98,10 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+main h1 {
+  letter-spacing: -0.025em;
 }

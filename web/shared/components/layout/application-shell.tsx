@@ -70,7 +70,7 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
 
   return (
     <div className="min-h-svh bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r bg-card p-4 md:flex md:flex-col">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border/70 bg-card/90 p-4 backdrop-blur md:flex md:flex-col">
         <Brand className="px-2 py-1" />
         <nav aria-label="Primary navigation" className="mt-8 flex flex-1 flex-col gap-1">
           {primaryItems.map((item) => (
@@ -91,7 +91,7 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
       </aside>
 
       <div className="md:pl-64">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur sm:px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/70 bg-background/90 px-4 backdrop-blur sm:px-6">
           <Brand className="md:hidden" />
           <p className="hidden text-sm text-muted-foreground md:block">Your pantry, kept practical.</p>
           <div className="flex items-center gap-1">
@@ -104,7 +104,7 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
         <main className="mx-auto w-full max-w-7xl px-4 py-6 pb-24 sm:px-6 md:pb-8 lg:px-8">{children}</main>
       </div>
 
-      <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t bg-card px-1 pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav aria-label="Mobile navigation" className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-border/70 bg-card/95 px-1 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
         {primaryItems.map((item) => (
           <MobileNavLink key={item.href} item={item} active={isActive(pathname, item.href, item.exact)} />
         ))}
@@ -141,7 +141,7 @@ type NavigationItem = (typeof primaryItems)[number] | (typeof moreItems)[number]
 
 function DesktopNavLink({ item, active }: Readonly<{ item: NavigationItem; active: boolean }>) {
   return (
-    <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground", active && "bg-accent text-accent-foreground")}>
+    <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-[background-color,color,transform] duration-150 hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary")}>
       <item.icon className="size-4" aria-hidden="true" />
       {item.label}
     </Link>
@@ -150,7 +150,7 @@ function DesktopNavLink({ item, active }: Readonly<{ item: NavigationItem; activ
 
 function MobileNavLink({ item, active }: Readonly<{ item: (typeof primaryItems)[number]; active: boolean }>) {
   return (
-    <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 text-center text-[0.68rem] font-medium text-muted-foreground", active && "text-primary")}>
+    <Link href={item.href} aria-current={active ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-md text-center text-[0.68rem] font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent/70", active && "text-primary")}>
       <item.icon className="size-5" aria-hidden="true" />
       {item.label}
     </Link>
