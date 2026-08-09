@@ -37,6 +37,13 @@ public sealed class ShoppingListsController(
     public async Task<ActionResult<ShoppingListResponse>> Get(Guid listId, CancellationToken cancellationToken) =>
         Ok(await shoppingListService.GetAsync(listId, cancellationToken));
 
+    [HttpDelete("{listId:guid}")]
+    public async Task<IActionResult> Delete(Guid listId, CancellationToken cancellationToken)
+    {
+        await shoppingListService.DeleteAsync(listId, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPut("{listId:guid}")]
     public async Task<ActionResult<ShoppingListResponse>> Update(
         Guid listId,

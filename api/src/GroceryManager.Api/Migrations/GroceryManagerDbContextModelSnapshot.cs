@@ -342,7 +342,7 @@ namespace GroceryManager.Api.Migrations
                     b.HasIndex("OwnerUserId")
                         .IsUnique();
 
-                    b.ToTable("Pantries", t =>
+                    b.ToTable("Pantries", null, t =>
                         {
                             t.HasCheckConstraint("CK_Pantries_ShoppingIntervalDays", "\"ShoppingIntervalDays\" > 0");
                         });
@@ -376,12 +376,12 @@ namespace GroceryManager.Api.Migrations
                     b.Property<Guid?>("DefaultStorageLocationId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Icon")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -577,7 +577,6 @@ namespace GroceryManager.Api.Migrations
                     b.HasIndex("SourcePresetId");
 
                     b.HasIndex("SourceStocktakeId")
-                        .IsUnique()
                         .HasFilter("\"SourceStocktakeId\" IS NOT NULL");
 
                     b.HasIndex("PantryId", "Status");
@@ -602,6 +601,9 @@ namespace GroceryManager.Api.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<bool>("CreatePantryItemOnPurchase")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("DestinationLocationId")
                         .HasColumnType("uuid");
 
@@ -609,9 +611,6 @@ namespace GroceryManager.Api.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<bool>("IsManual")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("CreatePantryItemOnPurchase")
                         .HasColumnType("boolean");
 
                     b.Property<string>("ItemNameSnapshot")
@@ -631,10 +630,10 @@ namespace GroceryManager.Api.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
-                    b.Property<Guid?>("PantryItemId")
+                    b.Property<Guid?>("PantryCategoryId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("PantryCategoryId")
+                    b.Property<Guid?>("PantryItemId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("PantryTrackingUnit")
@@ -791,15 +790,15 @@ namespace GroceryManager.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ShoppingPresetId");
-
-                    b.HasIndex("PantryId", "StartedAtUtc")
-                        .IsDescending(false, true);
-
                     b.HasIndex("PantryId")
                         .IsUnique()
                         .HasDatabaseName("IX_Stocktakes_PantryId_InProgress")
                         .HasFilter("\"Status\" = 'InProgress'");
+
+                    b.HasIndex("ShoppingPresetId");
+
+                    b.HasIndex("PantryId", "StartedAtUtc")
+                        .IsDescending(false, true);
 
                     b.ToTable("Stocktakes", (string)null);
                 });
@@ -1131,21 +1130,21 @@ namespace GroceryManager.Api.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("GroceryManager.Api.Entities.Stocktakes.Stocktake", null)
-                        .WithOne()
-                        .HasForeignKey("GroceryManager.Api.Entities.Shopping.ShoppingList", "SourceStocktakeId")
+                        .WithMany()
+                        .HasForeignKey("SourceStocktakeId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("GroceryManager.Api.Entities.Shopping.ShoppingListItem", b =>
                 {
-                    b.HasOne("GroceryManager.Api.Entities.Pantry.Category", null)
-                        .WithMany()
-                        .HasForeignKey("PantryCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("GroceryManager.Api.Entities.Pantry.StorageLocation", null)
                         .WithMany()
                         .HasForeignKey("DestinationLocationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("GroceryManager.Api.Entities.Pantry.Category", null)
+                        .WithMany()
+                        .HasForeignKey("PantryCategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("GroceryManager.Api.Entities.Pantry.PantryItem", null)

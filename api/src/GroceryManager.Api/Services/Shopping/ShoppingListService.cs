@@ -34,6 +34,13 @@ public sealed class ShoppingListService(
     public async Task<ShoppingListResponse> GetAsync(Guid listId, CancellationToken cancellationToken) =>
         await MapAsync(await FindAsync(listId, cancellationToken), cancellationToken);
 
+    public async Task DeleteAsync(Guid listId, CancellationToken cancellationToken)
+    {
+        var list = await FindAsync(listId, cancellationToken);
+        db.ShoppingLists.Remove(list);
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<ShoppingListResponse> GenerateAsync(GenerateShoppingListRequest request, CancellationToken cancellationToken)
     {
         var pantryId = await ServiceSupport.RequirePantryIdAsync(db, currentUser, cancellationToken);
@@ -43,9 +50,6 @@ public sealed class ShoppingListService(
             ? await db.Stocktakes.SingleOrDefaultAsync(x => x.Id == stocktakeId && x.PantryId == pantryId && x.Status == StocktakeStatus.Completed, cancellationToken)
                 ?? throw new ArgumentException("The stocktake must exist and be completed.")
             : null;
-        if (stocktake is not null && await db.ShoppingLists.AnyAsync(x => x.SourceStocktakeId == stocktake.Id, cancellationToken))
-            throw new ConflictException("This stocktake has already generated a shopping list.");
-
         var pantryItems = await GetRegularItemsAsync(pantryId, cancellationToken);
         var categories = await db.Categories.AsNoTracking().Where(x => x.PantryId == pantryId).ToDictionaryAsync(x => x.Id, cancellationToken);
         var itemIds = pantryItems.Select(x => x.Id).ToArray();
@@ -322,16 +326,21 @@ public sealed class ShoppingListService(
     {
         var ids = lists.Select(x => x.Id).ToArray();
         var items = await db.ShoppingListItems.AsNoTracking().Where(x => ids.Contains(x.ShoppingListId)).OrderBy(x => x.SortOrder).ToListAsync(cancellationToken);
+        var locationIds = items.Where(x => x.DestinationLocationId.HasValue).Select(x => x.DestinationLocationId!.Value).Distinct().ToArray();
+        var pantryItemIds = items.Where(x => x.PantryItemId.HasValue).Select(x => x.PantryItemId!.Value).Distinct().ToArray();
+        var assignedLocations = await db.PantryItemLocations.AsNoTracking().Where(x => pantryItemIds.Contains(x.PantryItemId)).GroupBy(x => x.PantryItemId).Select(group => group.OrderBy(x => x.SortOrder).First()).ToDictionaryAsync(x => x.PantryItemId, cancellationToken);
+        var allLocationIds = locationIds.Concat(assignedLocations.Values.Select(x => x.StorageLocationId)).Distinct().ToArray();
+        var locations = await db.StorageLocations.AsNoTracking().Where(x => allLocationIds.Contains(x.Id)).ToDictionaryAsync(x => x.Id, cancellationToken);
         return lists.Select(x => new ShoppingListResponse(x.Id, x.SourceStocktakeId, x.Name, x.Status, x.GeneratedAtUtc, x.CompletedAtUtc,
-            items.Where(y => y.ShoppingListId == x.Id).Select(ToResponse).ToList(), ServiceSupport.EncodeVersion(x.Version))).ToList();
+            items.Where(y => y.ShoppingListId == x.Id).Select(item => ToResponse(item, locations.GetValueOrDefault(item.DestinationLocationId ?? Guid.Empty)?.Name ?? (item.PantryItemId is Guid pantryItemId && assignedLocations.TryGetValue(pantryItemId, out var assigned) ? locations.GetValueOrDefault(assigned.StorageLocationId)?.Name : null))).ToList(), ServiceSupport.EncodeVersion(x.Version))).ToList();
     }
 
     private async Task<ShoppingListResponse> MapAsync(ShoppingList list, CancellationToken cancellationToken) =>
         (await MapManyAsync([list], cancellationToken))[0];
 
-    private static ShoppingListItemResponse ToResponse(ShoppingListItem x) =>
+    private static ShoppingListItemResponse ToResponse(ShoppingListItem x, string? locationName = null) =>
         new(x.Id, x.PantryItemId, x.ItemNameSnapshot, x.CategoryNameSnapshot,
             x.TrackingUnitSnapshot, x.PackageSizeSnapshot, x.PackageUnitSnapshot, x.StockAtGeneration,
             x.RequiredAtGeneration, x.SuggestedPurchaseQuantity, x.Outcome, x.IsManual,
-            x.SortOrder, ServiceSupport.EncodeVersion(x.Version));
+            x.SortOrder, locationName, ServiceSupport.EncodeVersion(x.Version));
 }

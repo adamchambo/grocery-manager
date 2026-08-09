@@ -194,10 +194,10 @@ internal static class GroceryManagerModelConfiguration
         builder.Property(x => x.Status).HasConversion<string>().HasMaxLength(32);
         builder.Property(x => x.Version).IsConcurrencyToken();
         builder.HasIndex(x => new { x.PantryId, x.Status });
-        builder.HasIndex(x => x.SourceStocktakeId).IsUnique().HasFilter("\"SourceStocktakeId\" IS NOT NULL");
+        builder.HasIndex(x => x.SourceStocktakeId).HasFilter("\"SourceStocktakeId\" IS NOT NULL");
         builder.HasOne<Pantry>().WithMany().HasForeignKey(x => x.PantryId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<ShoppingPreset>().WithMany().HasForeignKey(x => x.SourcePresetId).OnDelete(DeleteBehavior.Restrict);
-        builder.HasOne<Stocktake>().WithOne().HasForeignKey<ShoppingList>(x => x.SourceStocktakeId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Stocktake>().WithMany().HasForeignKey(x => x.SourceStocktakeId).OnDelete(DeleteBehavior.Restrict);
     }
 
     private static void ConfigureShoppingListItem(EntityTypeBuilder<ShoppingListItem> builder)

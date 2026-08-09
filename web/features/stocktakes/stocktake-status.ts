@@ -10,5 +10,9 @@ export function entryStatusLabel(status: number) {
 }
 
 export function formatQuantity(quantity: number | string, trackingUnit: string) {
-  return `${quantity} ${trackingUnit.toLowerCase()}`
+  return `${quantity} ${trackingUnitLabel(trackingUnit)}`
+}
+
+export function trackingUnitLabel(trackingUnit: string) {
+  return trackingUnit.toLowerCase() === "weight" ? "kg" : trackingUnit.toLowerCase() === "volume" ? "litres" : trackingUnit.toLowerCase() === "item" ? "items" : "packages"
 }

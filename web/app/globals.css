@@ -105,3 +105,14 @@ body {
 main h1 {
   letter-spacing: -0.025em;
 }
+
+/* Shopping-list review uses the sticky footer as its single primary action. */
+@media (min-width: 768px) {
+  main:has([class*="pb-24"]) [class*="fixed"][class*="bottom-0"] {
+    left: 16rem;
+  }
+}
+
+main:has([class*="pb-24"]) [class*="pb-24"] > header > div > a:last-child {
+  display: none;
+}

@@ -30,4 +30,5 @@ public interface IShoppingListService
         CancellationToken cancellationToken);
     public Task RemoveItemAsync(Guid listId, Guid itemId, CancellationToken cancellationToken);
     public Task<ShoppingListResponse> CompleteAsync(Guid listId, CancellationToken cancellationToken);
+    public Task DeleteAsync(Guid listId, CancellationToken cancellationToken);
 }

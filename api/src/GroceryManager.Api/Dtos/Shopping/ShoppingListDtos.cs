@@ -5,10 +5,14 @@ using GroceryManager.Api.Enums.Shopping;
 
 namespace GroceryManager.Api.Dtos.Shopping;
 
-public sealed record GenerateShoppingListRequest(
-    Guid? StocktakeId,
-    [StringLength(160)] string? Name)
+public sealed class GenerateShoppingListRequest
 {
+    public Guid? StocktakeId { get; init; }
+    [StringLength(160)] public string? Name { get; init; }
+
+    public GenerateShoppingListRequest() { }
+    public GenerateShoppingListRequest(Guid? stocktakeId, string? name) => (StocktakeId, Name) = (stocktakeId, name);
+
     [Obsolete("Shopping presets are no longer used. Generate a list from a stocktake.")]
     public GenerateShoppingListRequest(Guid? _, Guid? stocktakeId, string? name) : this(stocktakeId, name) { }
 }
@@ -29,11 +33,16 @@ public sealed record AddShoppingListItemRequest(
 public sealed record UpdateShoppingListOrderRequest(
     [Required, MinLength(1)] IReadOnlyList<Guid> ShoppingListItemIds);
 
-public sealed record UpdateShoppingListItemRequest(
-    [Range(typeof(decimal), "0", "999999999999999.999")] decimal? SuggestedPurchaseQuantity,
-    ShoppingListItemOutcome Outcome,
-    [Required] string Version)
+public sealed class UpdateShoppingListItemRequest
 {
+    [Range(typeof(decimal), "0", "999999999999999.999")] public decimal? SuggestedPurchaseQuantity { get; init; }
+    public ShoppingListItemOutcome Outcome { get; init; }
+    [Required] public string Version { get; init; } = "";
+
+    public UpdateShoppingListItemRequest() { }
+    public UpdateShoppingListItemRequest(decimal? suggestedPurchaseQuantity, ShoppingListItemOutcome outcome, string version) =>
+        (SuggestedPurchaseQuantity, Outcome, Version) = (suggestedPurchaseQuantity, outcome, version);
+
     [Obsolete("Actual purchases and destinations are no longer tracked.")]
     public UpdateShoppingListItemRequest(decimal? suggestedPurchaseQuantity, decimal? actualPurchaseQuantity, ShoppingListItemOutcome outcome, Guid? destinationLocationId, string version)
         : this(suggestedPurchaseQuantity, outcome, version) { }
@@ -53,6 +62,7 @@ public sealed record ShoppingListItemResponse(
     ShoppingListItemOutcome Outcome,
     bool IsManual,
     int SortOrder,
+    string? LocationName,
     string Version)
 {
     [Obsolete("Concurrent-list warnings are no longer part of the shopping workflow.")]

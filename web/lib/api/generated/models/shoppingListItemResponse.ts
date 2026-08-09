@@ -41,5 +41,7 @@ export interface ShoppingListItemResponse {
   isManual: boolean;
   /** @pattern ^-?(?:0|[1-9]\d*)$ */
   sortOrder: number | string;
+  /** @nullable */
+  locationName: string | null;
   version: string;
 }
