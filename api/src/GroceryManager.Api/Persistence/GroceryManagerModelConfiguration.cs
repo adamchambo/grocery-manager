@@ -215,10 +215,12 @@ internal static class GroceryManagerModelConfiguration
         builder.Property(x => x.SuggestedPurchaseQuantity).HasColumnType(QuantityType);
         builder.Property(x => x.ActualPurchaseQuantity).HasColumnType(QuantityType);
         builder.Property(x => x.Outcome).HasConversion<string>().HasMaxLength(32);
+        builder.Property(x => x.PantryTrackingUnit).HasConversion<string>().HasMaxLength(32);
         builder.Property(x => x.Version).IsConcurrencyToken();
         builder.HasIndex(x => new { x.PantryItemId, x.Outcome });
         builder.HasOne<ShoppingList>().WithMany().HasForeignKey(x => x.ShoppingListId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<PantryItem>().WithMany().HasForeignKey(x => x.PantryItemId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Category>().WithMany().HasForeignKey(x => x.PantryCategoryId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<StorageLocation>().WithMany().HasForeignKey(x => x.DestinationLocationId).OnDelete(DeleteBehavior.Restrict);
     }
 

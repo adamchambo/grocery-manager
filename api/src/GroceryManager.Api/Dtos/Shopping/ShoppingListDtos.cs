@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using GroceryManager.Api.Enums.Pantry;
 using GroceryManager.Api.Enums.Shopping;
 
 namespace GroceryManager.Api.Dtos.Shopping;
@@ -15,7 +16,13 @@ public sealed record UpdateShoppingListRequest(
 public sealed record AddShoppingListItemRequest(
     [Required, StringLength(160)] string Name,
     [Range(typeof(decimal), "0.001", "999999999999999.999")] decimal SuggestedPurchaseQuantity,
+    bool CreatePantryItemOnPurchase,
+    Guid? PantryCategoryId,
+    TrackingUnit? PantryTrackingUnit,
     Guid? DestinationLocationId);
+
+public sealed record UpdateShoppingListOrderRequest(
+    [Required, MinLength(1)] IReadOnlyList<Guid> ShoppingListItemIds);
 
 public sealed record UpdateShoppingListItemRequest(
     [Range(typeof(decimal), "0", "999999999999999.999")] decimal? SuggestedPurchaseQuantity,
@@ -27,6 +34,7 @@ public sealed record UpdateShoppingListItemRequest(
 public sealed record ShoppingListItemResponse(
     Guid Id,
     Guid? PantryItemId,
+    Guid? PantryCategoryId,
     Guid? DestinationLocationId,
     string ItemName,
     string? Brand,
@@ -40,6 +48,8 @@ public sealed record ShoppingListItemResponse(
     decimal? ActualPurchaseQuantity,
     ShoppingListItemOutcome Outcome,
     bool IsManual,
+    bool CreatePantryItemOnPurchase,
+    bool IsOnAnotherActiveList,
     int SortOrder,
     DateTimeOffset? InventoryAppliedAtUtc,
     string Version);
@@ -50,6 +60,7 @@ public sealed record ShoppingListResponse(
     Guid? SourceStocktakeId,
     string Name,
     ShoppingListStatus Status,
+    bool UsesCustomOrder,
     bool StockChangedSinceGeneration,
     DateTimeOffset GeneratedAtUtc,
     DateTimeOffset? CompletedAtUtc,

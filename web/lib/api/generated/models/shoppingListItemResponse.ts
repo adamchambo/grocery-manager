@@ -11,6 +11,8 @@ export interface ShoppingListItemResponse {
   /** @nullable */
   pantryItemId: string | null;
   /** @nullable */
+  pantryCategoryId: string | null;
+  /** @nullable */
   destinationLocationId: string | null;
   itemName: string;
   /** @nullable */
@@ -48,6 +50,8 @@ export interface ShoppingListItemResponse {
   actualPurchaseQuantity: number | string | null;
   outcome: ShoppingListItemOutcome;
   isManual: boolean;
+  createPantryItemOnPurchase: boolean;
+  isOnAnotherActiveList: boolean;
   /** @pattern ^-?(?:0|[1-9]\d*)$ */
   sortOrder: number | string;
   /** @nullable */

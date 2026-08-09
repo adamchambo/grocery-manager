@@ -15,6 +15,7 @@ export interface ShoppingListResponse {
   sourceStocktakeId: string | null;
   name: string;
   status: ShoppingListStatus;
+  usesCustomOrder: boolean;
   stockChangedSinceGeneration: boolean;
   generatedAtUtc: string;
   /** @nullable */

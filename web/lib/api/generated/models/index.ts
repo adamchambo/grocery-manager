@@ -64,6 +64,7 @@ export * from './updatePantryItemLocationsRequest';
 export * from './updatePantryItemRequest';
 export * from './updatePantryRequest';
 export * from './updateShoppingListItemRequest';
+export * from './updateShoppingListOrderRequest';
 export * from './updateStocktakeLocationOrderRequest';
 export * from './updateShoppingListRequest';
 export * from './updateShoppingPresetRequest';

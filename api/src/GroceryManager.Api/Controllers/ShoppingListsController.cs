@@ -59,12 +59,29 @@ public sealed class ShoppingListsController(
         CancellationToken cancellationToken) =>
         Ok(await shoppingListService.UpdateItemAsync(listId, itemId, request, cancellationToken));
 
+    [HttpPut("{listId:guid}/order")]
+    public async Task<IActionResult> UpdateOrder(
+        Guid listId,
+        UpdateShoppingListOrderRequest request,
+        CancellationToken cancellationToken)
+    {
+        await shoppingListService.UpdateOrderAsync(listId, request, cancellationToken);
+        return NoContent();
+    }
+
     [HttpDelete("{listId:guid}/items/{itemId:guid}")]
     public async Task<IActionResult> RemoveItem(Guid listId, Guid itemId, CancellationToken cancellationToken)
     {
         await shoppingListService.RemoveItemAsync(listId, itemId, cancellationToken);
         return NoContent();
     }
+
+    [HttpPost("{listId:guid}/items/{itemId:guid}/undo-purchase")]
+    public async Task<ActionResult<ShoppingListItemResponse>> UndoPurchase(
+        Guid listId,
+        Guid itemId,
+        CancellationToken cancellationToken) =>
+        Ok(await shoppingListService.UndoPurchaseAsync(listId, itemId, cancellationToken));
 
     [HttpPost("{listId:guid}/recalculate")]
     public async Task<ActionResult<ShoppingListResponse>> Recalculate(

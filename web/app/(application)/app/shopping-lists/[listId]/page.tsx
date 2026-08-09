@@ -1,3 +1,3 @@
-export default function ShoppingListPage() {
-  return null;
-}
+import { ShoppingListDetail } from "@/features/shopping/components/shopping-list-detail"
+
+export default function ShoppingListPage() { return <ShoppingListDetail /> }

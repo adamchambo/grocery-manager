@@ -10,6 +10,7 @@ public sealed class ShoppingList
     public Guid? SourceStocktakeId { get; set; }
     public required string Name { get; set; }
     public ShoppingListStatus Status { get; set; }
+    public bool UsesCustomOrder { get; set; }
     public bool StockChangedSinceGeneration { get; set; }
     public DateTimeOffset GeneratedAtUtc { get; set; }
     public DateTimeOffset? CompletedAtUtc { get; set; }

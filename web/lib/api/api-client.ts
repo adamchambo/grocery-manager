@@ -32,3 +32,16 @@ export async function apiFetch<T>(
 
   return (await response.json()) as T;
 }
+
+export async function apiFetchBlob(url: string, options: RequestInit): Promise<Blob> {
+  const response = await fetch(`${apiBaseUrl}${url}`, {
+    ...options,
+    credentials: "include",
+    headers: { Accept: "application/pdf", ...options.headers },
+  });
+  if (!response.ok) {
+    const details = await response.json().catch(() => null);
+    throw new ApiError(response.status, details);
+  }
+  return response.blob();
+}

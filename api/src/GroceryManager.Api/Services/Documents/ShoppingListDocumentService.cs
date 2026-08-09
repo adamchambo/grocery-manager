@@ -32,35 +32,44 @@ public sealed class ShoppingListDocumentService(
 
     private static byte[] BuildPdf(IEnumerable<string> lines)
     {
-        var content = new StringBuilder("BT /F1 18 Tf 50 790 Td ");
-        var first = true;
-        foreach (var line in lines.Take(38))
-        {
-            if (!first) content.Append("0 -20 Td ");
-            content.Append('(').Append(Escape(line)).Append(") Tj ");
-            first = false;
-        }
-        content.Append("ET");
-
-        var objects = new[]
+        var allLines = lines.ToList();
+        var pages = allLines.Chunk(38).ToList();
+        if (pages.Count == 0) pages.Add([]);
+        var fontObjectNumber = 3 + (pages.Count * 2);
+        var objects = new List<string>
         {
             "<< /Type /Catalog /Pages 2 0 R >>",
-            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
-            $"<< /Length {Encoding.ASCII.GetByteCount(content.ToString())} >>\nstream\n{content}\nendstream",
-            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+            $"<< /Type /Pages /Kids [{string.Join(' ', Enumerable.Range(0, pages.Count).Select(index => $"{3 + (index * 2)} 0 R"))}] /Count {pages.Count} >>"
         };
+        for (var pageIndex = 0; pageIndex < pages.Count; pageIndex++)
+        {
+            var pageLines = pages[pageIndex];
+            var content = new StringBuilder("BT /F1 18 Tf 50 790 Td ");
+            var first = true;
+            foreach (var line in pageLines)
+            {
+                if (!first) content.Append("0 -20 Td ");
+                content.Append('(').Append(Escape(line)).Append(") Tj ");
+                first = false;
+            }
+            content.Append("ET");
+            var stream = content.ToString();
+            var contentObjectNumber = 4 + (pageIndex * 2);
+            objects.Add($"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 {fontObjectNumber} 0 R >> >> /Contents {contentObjectNumber} 0 R >>");
+            objects.Add($"<< /Length {Encoding.ASCII.GetByteCount(stream)} >>\nstream\n{stream}\nendstream");
+        }
+        objects.Add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
         var pdf = new StringBuilder("%PDF-1.4\n");
         var offsets = new List<int> { 0 };
-        for (var i = 0; i < objects.Length; i++)
+        for (var i = 0; i < objects.Count; i++)
         {
             offsets.Add(Encoding.ASCII.GetByteCount(pdf.ToString()));
             pdf.Append(i + 1).Append(" 0 obj\n").Append(objects[i]).Append("\nendobj\n");
         }
         var xref = Encoding.ASCII.GetByteCount(pdf.ToString());
-        pdf.Append("xref\n0 6\n0000000000 65535 f \n");
+        pdf.Append("xref\n0 ").Append(objects.Count + 1).Append("\n0000000000 65535 f \n");
         foreach (var offset in offsets.Skip(1)) pdf.Append(offset.ToString("D10", CultureInfo.InvariantCulture)).Append(" 00000 n \n");
-        pdf.Append("trailer << /Size 6 /Root 1 0 R >>\nstartxref\n").Append(xref).Append("\n%%EOF");
+        pdf.Append("trailer << /Size ").Append(objects.Count + 1).Append(" /Root 1 0 R >>\nstartxref\n").Append(xref).Append("\n%%EOF");
         return Encoding.ASCII.GetBytes(pdf.ToString());
     }
 

@@ -52,6 +52,26 @@ public sealed class BackendFlowTests(PostgreSqlFixture fixture) : IClassFixture<
     }
 
     [Fact]
+    public async Task ShoppingGenerationUsesCategoryThenItemNameOrderAndCustomOrderMustBeExact()
+    {
+        await using var db = await CreateContextAsync();
+        var userId = await CreateUserAndPantryAsync(db, "shopping-order@example.com");
+        await CreateItemAsync(db, userId, "Rice", TrackingUnit.Package, 1, 7, 0);
+        await CreateItemAsync(db, userId, "Bread", TrackingUnit.Package, 1, 7, 0);
+        var presetId = await GetEverythingPresetIdAsync(db, userId);
+        var service = new ShoppingListService(db, new TestCurrentUserContext(userId));
+        var list = await service.GenerateAsync(new GenerateShoppingListRequest(presetId, null, null), CancellationToken.None);
+
+        Assert.Equal(["Bread", "Rice"], list.Items.Select(x => x.ItemName));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.UpdateOrderAsync(list.Id,
+            new UpdateShoppingListOrderRequest([list.Items[0].Id, list.Items[0].Id]), CancellationToken.None));
+        await service.UpdateOrderAsync(list.Id, new UpdateShoppingListOrderRequest(list.Items.Select(x => x.Id).Reverse().ToArray()), CancellationToken.None);
+        var reordered = await service.GetAsync(list.Id, CancellationToken.None);
+        Assert.True(reordered.UsesCustomOrder);
+        Assert.Equal(["Rice", "Bread"], reordered.Items.Select(x => x.ItemName));
+    }
+
+    [Fact]
     public async Task CompletingStocktakeUpdatesInventoryAndCreatesAdjustment()
     {
         await using var db = await CreateContextAsync();
@@ -70,6 +90,28 @@ public sealed class BackendFlowTests(PostgreSqlFixture fixture) : IClassFixture<
         Assert.Equal(2m, await db.PantryItemLocations.Where(x => x.PantryItemId == item.Id).Select(x => x.CurrentQuantity).SingleAsync());
         var adjustment = await db.InventoryAdjustments.SingleAsync(x => x.SourceStocktakeEntryId == entry.Id);
         Assert.Equal(-3m, adjustment.QuantityDelta);
+    }
+
+    [Fact]
+    public async Task ShoppingGenerationFromCompletedStocktakeUsesItsConfirmedQuantities()
+    {
+        await using var db = await CreateContextAsync();
+        var userId = await CreateUserAndPantryAsync(db, "stocktake-shopping@example.com");
+        var item = await CreateItemAsync(db, userId, "Milk", TrackingUnit.Package, 2, 7, 0);
+        var presetId = await GetEverythingPresetIdAsync(db, userId);
+        var stocktakeService = new StocktakeService(db, new TestCurrentUserContext(userId));
+        var stocktake = await stocktakeService.StartAsync(new StartStocktakeRequest(presetId), CancellationToken.None);
+        var entry = Assert.Single(stocktake.Entries);
+        await stocktakeService.UpdateEntryAsync(stocktake.Id, entry.Id,
+            new UpdateStocktakeEntryRequest(StocktakeEntryStatus.Corrected, 0, entry.Version), CancellationToken.None);
+        await stocktakeService.CompleteAsync(stocktake.Id, null, CancellationToken.None);
+        await new InventoryAdjustmentService(db, new TestCurrentUserContext(userId)).CreateAsync(
+            new CreateInventoryAdjustmentRequest(item.Locations.Single().Id, 1, null, "after-stocktake"), CancellationToken.None);
+
+        var list = await new ShoppingListService(db, new TestCurrentUserContext(userId))
+            .GenerateAsync(new GenerateShoppingListRequest(presetId, stocktake.Id, null), CancellationToken.None);
+
+        Assert.Equal(2m, Assert.Single(list.Items).SuggestedPurchaseQuantity);
     }
 
     [Fact]
@@ -104,6 +146,30 @@ public sealed class BackendFlowTests(PostgreSqlFixture fixture) : IClassFixture<
 
         Assert.Equal(3m, await db.PantryItemLocations.Where(x => x.PantryItemId == item.Id).Select(x => x.CurrentQuantity).SingleAsync());
         Assert.Equal(3m, (await db.InventoryAdjustments.SingleAsync(x => x.SourceShoppingListItemId == listItem.Id)).QuantityDelta);
+    }
+
+    [Fact]
+    public async Task ManualTrackedItemCreatesPantryItemOnlyWhenPurchasedAndCanBeUndone()
+    {
+        await using var db = await CreateContextAsync();
+        var userId = await CreateUserAndPantryAsync(db, "manual-shopping@example.com");
+        var pantryId = await db.Pantries.Where(x => x.OwnerUserId == userId).Select(x => x.Id).SingleAsync();
+        var categoryId = await db.Categories.Where(x => x.PantryId == pantryId).Select(x => x.Id).FirstAsync();
+        var locationId = await db.StorageLocations.Where(x => x.PantryId == pantryId).Select(x => x.Id).FirstAsync();
+        var service = new ShoppingListService(db, new TestCurrentUserContext(userId));
+        var list = await service.GenerateAsync(new GenerateShoppingListRequest(null, null, null), CancellationToken.None);
+        var manual = await service.AddItemAsync(list.Id,
+            new AddShoppingListItemRequest("Tortillas", 2, true, categoryId, TrackingUnit.Package, locationId), CancellationToken.None);
+
+        Assert.Equal(0, await db.PantryItems.CountAsync(x => x.Name == "Tortillas"));
+        var purchased = await service.UpdateItemAsync(list.Id, manual.Id,
+            new UpdateShoppingListItemRequest(null, 2, ShoppingListItemOutcome.Purchased, locationId, manual.Version), CancellationToken.None);
+        Assert.NotNull(purchased.PantryItemId);
+        Assert.Equal(2m, await db.PantryItemLocations.Where(x => x.PantryItemId == purchased.PantryItemId).Select(x => x.CurrentQuantity).SingleAsync());
+
+        var undone = await service.UndoPurchaseAsync(list.Id, manual.Id, CancellationToken.None);
+        Assert.Equal(ShoppingListItemOutcome.Pending, undone.Outcome);
+        Assert.Equal(0m, await db.PantryItemLocations.Where(x => x.PantryItemId == purchased.PantryItemId).Select(x => x.CurrentQuantity).SingleAsync());
     }
 
     [Fact]

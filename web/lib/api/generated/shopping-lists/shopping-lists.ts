@@ -12,10 +12,11 @@ import type {
   ShoppingListItemResponse,
   ShoppingListResponse,
   UpdateShoppingListItemRequest,
+  UpdateShoppingListOrderRequest,
   UpdateShoppingListRequest
 } from '../models';
 
-import { apiFetch } from '../../api-client';
+import { apiFetch, apiFetchBlob } from '../../api-client';
 
 export const getGetApiShoppingListsUrl = (params?: GetApiShoppingListsParams,) => {
   const normalizedParams = new URLSearchParams();
@@ -170,6 +171,27 @@ export const deleteApiShoppingListsListIdItemsItemId = async (listId: string,
   }
 );}
 
+export const getPutApiShoppingListsListIdOrderUrl = (listId: string,) => `/api/shopping-lists/${listId}/order`;
+
+export const putApiShoppingListsListIdOrder = async (listId: string,
+    updateShoppingListOrderRequest: UpdateShoppingListOrderRequest, options?: Parameters<typeof apiFetch>[1]): Promise<void> =>
+  apiFetch<void>(getPutApiShoppingListsListIdOrderUrl(listId), {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateShoppingListOrderRequest)
+  });
+
+export const getPostApiShoppingListsListIdItemsItemIdUndoPurchaseUrl = (listId: string, itemId: string,) =>
+  `/api/shopping-lists/${listId}/items/${itemId}/undo-purchase`;
+
+export const postApiShoppingListsListIdItemsItemIdUndoPurchase = async (listId: string,
+    itemId: string, options?: Parameters<typeof apiFetch>[1]): Promise<ShoppingListItemResponse> =>
+  apiFetch<ShoppingListItemResponse>(getPostApiShoppingListsListIdItemsItemIdUndoPurchaseUrl(listId, itemId), {
+    ...options,
+    method: 'POST'
+  });
+
 
 export const getPostApiShoppingListsListIdRecalculateUrl = (listId: string,) => {
 
@@ -239,9 +261,9 @@ export const getGetApiShoppingListsListIdPdfUrl = (listId: string,) => {
   return `/api/shopping-lists/${listId}/pdf`
 }
 
-export const getApiShoppingListsListIdPdf = async (listId: string, options?: Parameters<typeof apiFetch>[1]): Promise<void> => {
+export const getApiShoppingListsListIdPdf = async (listId: string, options?: Parameters<typeof apiFetch>[1]): Promise<Blob> => {
 
-  return apiFetch<void>(getGetApiShoppingListsListIdPdfUrl(listId),
+  return apiFetchBlob(getGetApiShoppingListsListIdPdfUrl(listId),
   {
     ...options,
     method: 'GET'
@@ -249,5 +271,4 @@ export const getApiShoppingListsListIdPdf = async (listId: string, options?: Par
 
   }
 );}
-
 
