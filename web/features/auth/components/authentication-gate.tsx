@@ -35,7 +35,7 @@ export function AuthenticationGate({ children, authenticatedRedirectTo, unauthen
           : typeof error === "object" && error !== null && "status" in error && typeof error.status === "number"
             ? error.status
             : undefined
-        if (status === 401 && unauthenticatedRedirectTo) {
+        if (unauthenticatedRedirectTo && (status === 401 || status === undefined)) {
           window.location.replace(unauthenticatedRedirectTo)
           return
         }
