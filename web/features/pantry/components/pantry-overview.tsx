@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
-import { MapPinIcon, PackagePlusIcon, SearchIcon, SearchXIcon } from "lucide-react"
+import { ListFilterIcon, MapPinIcon, PackagePlusIcon, SearchIcon, SearchXIcon, XIcon } from "lucide-react"
 
 import { getApiCategories } from "@/lib/api/generated/categories/categories"
 import type { CategoryResponse, PantryItemResponse, StorageLocationResponse } from "@/lib/api/generated/models"
@@ -14,6 +14,7 @@ import { Button } from "@/shared/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Input } from "@/shared/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select"
+import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/shared/components/ui/sheet"
 import { Spinner } from "@/shared/components/ui/spinner"
 import { useErrorToast } from "@/shared/hooks/use-error-toast"
 import { getCategoryIcon as categoryIcon, PantryItemIcon } from "@/features/pantry/components/pantry-item-icon-picker"
@@ -28,6 +29,7 @@ export function PantryOverview() {
   const [sort, setSort] = useState("alphabetical")
   const [error, setError] = useState<string>()
   const [loading, setLoading] = useState(true)
+  const activeFilterCount = Number(categoryId !== "all") + Number(locationId !== "all")
   useErrorToast(error, "Pantry unavailable")
 
   useEffect(() => {
@@ -62,15 +64,39 @@ export function PantryOverview() {
         <div><h1 className="text-2xl font-semibold tracking-tight">Pantry items</h1><p className="mt-1 text-sm text-muted-foreground">Track the products and locations that make up your pantry.</p></div>
         <Button asChild className="transition-all duration-200"><Link href="/app/pantry/new"><PackagePlusIcon />Add item</Link></Button>
       </header>
-      <div className="flex flex-wrap gap-3">
-        <Card className="w-52 gap-1 self-start py-3 shadow-none"><CardHeader className="px-4"><CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tracked products</CardTitle></CardHeader><CardContent className="px-4 text-xl font-semibold">{items.length}</CardContent></Card>
-        <Card className="w-52 gap-1 self-start py-3 shadow-none"><CardHeader className="px-4"><CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Storage locations</CardTitle></CardHeader><CardContent className="px-4 text-xl font-semibold">{locations.length}</CardContent></Card>
+      <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+        <Card className="min-w-0 gap-1 py-3 shadow-none sm:w-52"><CardHeader className="px-3 sm:px-4"><CardTitle className="text-[0.68rem] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">Tracked products</CardTitle></CardHeader><CardContent className="px-3 text-xl font-semibold sm:px-4">{items.length}</CardContent></Card>
+        <Card className="min-w-0 gap-1 py-3 shadow-none sm:w-52"><CardHeader className="px-3 sm:px-4"><CardTitle className="text-[0.68rem] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">Storage locations</CardTitle></CardHeader><CardContent className="px-3 text-xl font-semibold sm:px-4">{locations.length}</CardContent></Card>
       </div>
-      <div className="grid gap-3 rounded-2xl bg-surface-muted/80 p-3 md:grid-cols-[minmax(14rem,1fr)_12rem_12rem_12rem]">
+      <div className="hidden gap-3 rounded-2xl bg-surface-muted/80 p-3 md:grid md:grid-cols-[minmax(14rem,1fr)_12rem_12rem_12rem]">
         <div className="relative"><SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search products" className="bg-background pl-9 transition-shadow duration-200" /></div>
         <Select value={categoryId} onValueChange={setCategoryId}><SelectTrigger className="w-full bg-background transition-all duration-200"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All categories</SelectItem>{categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select>
         <Select value={locationId} onValueChange={setLocationId}><SelectTrigger className="w-full bg-background transition-all duration-200"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All locations</SelectItem>{locations.map((location) => <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>)}</SelectContent></Select>
         <Select value={sort} onValueChange={setSort}><SelectTrigger className="w-full bg-background transition-all duration-200"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="alphabetical">Alphabetical</SelectItem><SelectItem value="recent">Recently added</SelectItem><SelectItem value="category">Category</SelectItem><SelectItem value="location">Location</SelectItem></SelectContent></Select>
+      </div>
+      <div className="space-y-3 rounded-2xl bg-surface-muted/80 p-3 md:hidden">
+        <div className="relative"><SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search products" className="bg-background pl-9 transition-shadow duration-200" /></div>
+        <div className="grid grid-cols-2 gap-3">
+          <Sheet>
+            <SheetTrigger asChild><Button variant="outline" className="w-full justify-between"><span className="flex items-center gap-2"><ListFilterIcon />Filters</span>{activeFilterCount > 0 && <Badge>{activeFilterCount}</Badge>}</Button></SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <SheetHeader><SheetTitle>Filter pantry items</SheetTitle></SheetHeader>
+              <div className="grid gap-4 px-4">
+                <div className="grid gap-2"><label className="text-sm font-medium">Category</label><Select value={categoryId} onValueChange={setCategoryId}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All categories</SelectItem>{categories.map((category) => <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>)}</SelectContent></Select></div>
+                <div className="grid gap-2"><label className="text-sm font-medium">Storage location</label><Select value={locationId} onValueChange={setLocationId}><SelectTrigger className="w-full"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All locations</SelectItem>{locations.map((location) => <SelectItem key={location.id} value={location.id}>{location.name}</SelectItem>)}</SelectContent></Select></div>
+              </div>
+              <SheetFooter className="grid grid-cols-2">
+                <Button variant="outline" onClick={() => { setCategoryId("all"); setLocationId("all") }} disabled={activeFilterCount === 0}>Clear</Button>
+                <SheetClose asChild><Button>Show {filteredItems.length} items</Button></SheetClose>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
+          <Select value={sort} onValueChange={setSort}><SelectTrigger className="w-full bg-background"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="alphabetical">Alphabetical</SelectItem><SelectItem value="recent">Recently added</SelectItem><SelectItem value="category">Category</SelectItem><SelectItem value="location">Location</SelectItem></SelectContent></Select>
+        </div>
+        {activeFilterCount > 0 && <div className="flex gap-2 overflow-x-auto pb-1">
+          {categoryId !== "all" && <Button variant="outline" size="sm" className="shrink-0 rounded-full" onClick={() => setCategoryId("all")}>{categories.find((category) => category.id === categoryId)?.name}<XIcon /></Button>}
+          {locationId !== "all" && <Button variant="outline" size="sm" className="shrink-0 rounded-full" onClick={() => setLocationId("all")}>{locations.find((location) => location.id === locationId)?.name}<XIcon /></Button>}
+        </div>}
       </div>
       {filteredItems.length === 0 ? (
         <Card className="gap-3 py-8 text-center">
