@@ -30,8 +30,13 @@ export function AuthenticationGate({ children, authenticatedRedirectTo, unauthen
       })
       .catch((error: unknown) => {
         if (cancelled) return
-        if (error instanceof ApiError && error.status === 401 && unauthenticatedRedirectTo) {
-          router.replace(unauthenticatedRedirectTo)
+        const status = error instanceof ApiError
+          ? error.status
+          : typeof error === "object" && error !== null && "status" in error && typeof error.status === "number"
+            ? error.status
+            : undefined
+        if (status === 401 && unauthenticatedRedirectTo) {
+          window.location.replace(unauthenticatedRedirectTo)
           return
         }
         setStatus("error")
