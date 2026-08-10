@@ -14,10 +14,10 @@ const items = [
 export function PantryNavigation() {
   const pathname = usePathname()
   return (
-    <nav aria-label="Pantry sections" className="flex gap-1 overflow-x-auto border-b">
+    <nav aria-label="Pantry sections" className="flex gap-1 overflow-x-auto border-b border-border/50">
       {items.map((item) => {
         const active = item.exact ? pathname === item.href || pathname.startsWith("/app/pantry/items/") || pathname === "/app/pantry/new" : pathname.startsWith(item.href)
-        return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("border-b-[3px] border-transparent px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground", active && "border-primary text-foreground")}>{item.label}</Link>
+        return <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={cn("border-b-2 border-transparent px-3 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground", active && "border-primary text-foreground")}>{item.label}</Link>
       })}
     </nav>
   )

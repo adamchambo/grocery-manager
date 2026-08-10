@@ -52,7 +52,7 @@ export function ApplicationShell({ children }: Readonly<{ children: React.ReactN
 
   return (
     <div className="min-h-svh bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border/70 bg-card/90 p-4 backdrop-blur md:flex md:flex-col">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-border/60 bg-surface p-4 shadow-[4px_0_24px_rgb(24_32_24_/_0.03)] backdrop-blur md:flex md:flex-col">
         <Brand className="px-2 py-1" />
         <nav aria-label="Primary navigation" className="mt-8 flex flex-1 flex-col gap-1">
           {primaryItems.map((item) => (

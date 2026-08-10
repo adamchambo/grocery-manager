@@ -5,10 +5,10 @@
 
 :root {
   color-scheme: light;
-  --background: #f8faf7;
+  --background: #f7f8f5;
   --foreground: #182018;
-  --surface: #ffffff;
-  --surface-muted: #f0f3ed;
+  --surface: #fcfcfa;
+  --surface-muted: #f2f4ef;
   --card: #ffffff;
   --card-foreground: #182018;
   --popover: #ffffff;
@@ -17,47 +17,49 @@
   --secondary-foreground: #182018;
   --muted: #eff2ea;
   --muted-foreground: #667064;
-  --border: #e0e5dc;
-  --input: #dce3d8;
-  --primary: #2f6b3b;
-  --primary-hover: #255a31;
+  --border: #e3e7e1;
+  --input: #e3e7e1;
+  --primary: #2e7d32;
+  --primary-hover: #256a2a;
   --primary-foreground: #ffffff;
-  --accent: #eff2ea;
+  --accent: #dff2e3;
   --accent-foreground: #182018;
   --highlight: #a15c00;
   --destructive: #b42318;
   --success: #2f6b3b;
   --warning: #a15c00;
   --ring: #4c8c58;
-  --radius: 0.875rem;
+  --radius: 1.125rem;
+  --elevated: #ffffff;
 }
 
 .dark {
   color-scheme: dark;
-  --background: #101510;
+  --background: #0b0f0c;
   --foreground: #f3f6f0;
-  --surface: #171d17;
-  --surface-muted: #202820;
-  --card: #171d17;
+  --surface: #101411;
+  --surface-muted: #141a15;
+  --card: #181f19;
   --card-foreground: #f3f6f0;
-  --popover: #171d17;
+  --popover: #1e2720;
   --popover-foreground: #f3f6f0;
-  --secondary: #202820;
+  --secondary: #141a15;
   --secondary-foreground: #f3f6f0;
-  --muted: #202820;
+  --muted: #141a15;
   --muted-foreground: #a7b1a4;
-  --border: #354034;
-  --input: #354034;
-  --primary: #79c587;
-  --primary-hover: #91d39d;
+  --border: #2a332c;
+  --input: #2a332c;
+  --primary: #66bb6a;
+  --primary-hover: #7bc67f;
   --primary-foreground: #102313;
-  --accent: #202820;
+  --accent: #223326;
   --accent-foreground: #f3f6f0;
   --highlight: #f4b860;
   --destructive: #ff8a80;
   --success: #79c587;
   --warning: #f4b860;
-  --ring: #79c587;
+  --ring: #66bb6a;
+  --elevated: #1e2720;
 }
 
 @theme inline {
@@ -86,6 +88,7 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-ring: var(--ring);
+  --color-elevated: var(--elevated);
   --font-sans: var(--font-geist-sans);
   --radius-sm: calc(var(--radius) - 0.25rem);
   --radius-md: var(--radius);
@@ -100,6 +103,25 @@ body {
   font-family: var(--font-geist-sans), sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+[data-slot="card"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgb(24 32 24 / 0.08);
+}
+
+/* Selection tiles should read as soft controls, not outlined boxes. */
+label.rounded-lg.border {
+  border-color: transparent;
+  background: var(--surface-muted);
+  border-radius: 1.125rem;
+  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+label.rounded-lg.border:hover {
+  transform: translateY(-1px);
+  background: var(--accent);
+  box-shadow: 0 6px 16px rgb(24 32 24 / 0.06);
 }
 
 main h1 {
